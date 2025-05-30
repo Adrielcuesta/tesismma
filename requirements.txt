@@ -1,0 +1,11 @@
+google-generativeai
+langchain
+langchain-community
+langchain-google-genai
+sentence-transformers
+chromadb
+pymupdf
+python-dotenv
+# Especifica versiones si encuentras problemas de compatibilidad, ej:
+# langchain==0.1.20
+# chromadb==0.4.24
