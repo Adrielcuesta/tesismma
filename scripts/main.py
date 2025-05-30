@@ -21,13 +21,14 @@ def ejecutar_flujo_completo_analisis():
     print("######################################################################")
 
     # --- ETAPA 0: Cargar Configuración e Inicializar Directorios ---
+    # config.py ya imprime "INFO (config.py): Usando modelo de embeddings..." al ser importado.
     print("\n--- ETAPA 0: Cargando Configuración e Inicializando Directorios ---")
     if not config.inicializar_directorios_datos():
         print("Error fatal: No se pudieron inicializar los directorios de datos. Terminando.")
         return
     if not config.configure_google_api():
         print("Advertencia: API de Google no configurada. El LLM podría no funcionar.")
-        # Considerar si terminar aquí si la API es crucial para todas las etapas.
+        # Podrías decidir si terminar aquí si la API es esencial.
 
     # --- ETAPA 1: Detectar PDF del Proyecto a Analizar ---
     print("\n--- ETAPA 1: Detectando PDF del Proyecto a Analizar ---")
@@ -48,7 +49,6 @@ def ejecutar_flujo_completo_analisis():
     nombre_pdf_proyecto_detectado = pdfs_en_proyecto_analizar[0]
     print(f"PDF detectado para análisis: {nombre_pdf_proyecto_detectado}")
 
-    # Crear directorio de salida específico para este proyecto dentro de OUTPUT_PATH
     nombre_base_proyecto_analizado = os.path.splitext(nombre_pdf_proyecto_detectado)[0]
     output_dir_especifico_proyecto = os.path.join(config.OUTPUT_PATH, nombre_base_proyecto_analizado)
     try:
@@ -58,7 +58,6 @@ def ejecutar_flujo_completo_analisis():
         print(f"Error fatal: No se pudo crear el directorio de salida específico '{output_dir_especifico_proyecto}': {e}. Terminando.")
         return
 
-    # Obtener lista de PDFs de la base de conocimiento para el dashboard
     lista_pdfs_base_conocimiento = []
     try:
         if os.path.exists(config.DOCS_BASE_CONOCIMIENTO_PATH):
@@ -71,7 +70,9 @@ def ejecutar_flujo_completo_analisis():
     # --- ETAPA 2: Inicializando Modelo de Embeddings ---
     print("\n--- ETAPA 2: Inicializando Modelo de Embeddings ---")
     start_time_embed = time.time()
-    embedding_function = vector_db_manager.get_embedding_function(config.EMBEDDING_MODEL_NAME)
+    # ***** UTILIZAR EL NOMBRE DE VARIABLE CORRECTO DE CONFIG.PY *****
+    embedding_function = vector_db_manager.get_embedding_function(config.EMBEDDING_MODEL_NAME_OR_PATH)
+    # *****************************************************************
     if not embedding_function:
         print("Error fatal: No se pudo inicializar el modelo de embeddings. Terminando.")
         return
@@ -89,14 +90,14 @@ def ejecutar_flujo_completo_analisis():
         recrear_db_flag=config.RECREAR_DB
     )
     if not vector_db:
-        print("Error fatal: No se pudo crear o cargar la base de datos vectorial. Terminando.")
+        print("Error fatal: No se pudo crear o cargar la base de datos vectorial (main.py). Terminando.") # Mensaje más específico
         return
     print(f"Tiempo para gestión de DB: {time.time() - start_time_db:.2f} segundos.")
 
     # --- ETAPA 4: Configurando LLM y Cadena RAG ---
     print("\n--- ETAPA 4: Configurando LLM y Cadena RAG ---")
     start_time_rag_setup = time.time()
-    if not config.GEMINI_API_KEY: # Chequeo adicional por si configure_google_api() no detuvo el flujo
+    if not config.GEMINI_API_KEY: 
         print("Error fatal: GEMINI_API_KEY no está disponible. Terminando.")
         return
     llm = rag_components.get_llm_instance(config.LLM_MODEL_NAME, config.GEMINI_API_KEY)
@@ -139,11 +140,10 @@ def ejecutar_flujo_completo_analisis():
 
         if resultado_analisis_llm:
             print("\n--- ANÁLISIS DE RIESGOS GENERADO (RESPUESTA CRUDA DEL LLM) ---")
-            # Imprime solo una parte si es muy largo para la consola
             print(resultado_analisis_llm[:1000] + "..." if isinstance(resultado_analisis_llm, str) and len(resultado_analisis_llm) > 1000 else resultado_analisis_llm)
         else:
             print("Advertencia: El LLM no devolvió un resultado ('result' es None o vacío).")
-            resultado_analisis_llm = "El LLM no devolvió un resultado." # Para que el reporte no esté vacío
+            resultado_analisis_llm = "El LLM no devolvió un resultado." 
 
         print("\n--- FUENTES RECUPERADAS POR EL RETRIEVER ---")
         if fuentes_recuperadas_docs:
@@ -158,6 +158,8 @@ def ejecutar_flujo_completo_analisis():
             
     except Exception as e_invoke:
         print(f"Error crítico durante la invocación de la cadena RAG: {e_invoke}")
+        import traceback
+        traceback.print_exc()
         resultado_analisis_llm = f"Error en análisis durante la invocación de la cadena RAG: {str(e_invoke)}"
     
     print(f"Tiempo para ejecutar consulta RAG: {time.time() - start_time_query:.2f} segundos.")
@@ -169,9 +171,9 @@ def ejecutar_flujo_completo_analisis():
         ruta_json_resultados_generado = report_utils.formatear_y_guardar_reporte(
             resultado_analisis_llm=resultado_analisis_llm,
             fuentes_recuperadas=fuentes_recuperadas_serializables,
-            nombre_pdf_proyecto=nombre_pdf_proyecto_detectado, # Usar el nombre detectado
+            nombre_pdf_proyecto=nombre_pdf_proyecto_detectado, 
             modelo_llm_usado=config.LLM_MODEL_NAME,
-            output_path_dir=output_dir_especifico_proyecto # Guardar en la subcarpeta específica
+            output_path_dir=output_dir_especifico_proyecto
         )
         print(f"Tiempo para formatear y guardar reporte JSON: {time.time() - start_time_report:.2f} segundos.")
     else:
@@ -182,9 +184,6 @@ def ejecutar_flujo_completo_analisis():
         print("\n--- ETAPA 8: Generando Dashboard de Visualización ---")
         start_time_dashboard = time.time()
         
-        # El nombre del dashboard HTML se basará en el nombre del JSON pero con sufijo _dashboard.html
-        # El JSON ya se guarda con timestamp, así que el HTML también lo tendrá indirectamente.
-        # El nombre base del JSON es algo como "analisis_riesgos_ProyectoEjemplo_20250529_203000"
         base_name_json = os.path.splitext(os.path.basename(ruta_json_resultados_generado))[0]
         dashboard_html_filename = base_name_json + config.DASHBOARD_HTML_SUFFIX
         ruta_output_dashboard_html = os.path.join(output_dir_especifico_proyecto, dashboard_html_filename)
@@ -197,7 +196,6 @@ def ejecutar_flujo_completo_analisis():
         print(f"Tiempo para generar dashboard HTML: {time.time() - start_time_dashboard:.2f} segundos.")
     elif resultado_analisis_llm is not None:
         print("Advertencia: El archivo JSON de resultados no se generó o no se encontró. No se puede crear el dashboard.")
-
 
     print("\n######################################################################")
     print("# PROCESO DE ANÁLISIS DE RIESGOS RAG FINALIZADO                    #")

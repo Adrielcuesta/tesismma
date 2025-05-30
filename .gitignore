@@ -1,10 +1,13 @@
-*.pdf
-*.docx
-*.doc
-*.env
+# Archivos de configuración sensibles
+.env
+.env.example 
+# Considera si quieres versionar el ejemplo. Si lo haces, quita esta línea.
+# Si .env.example solo tiene la estructura sin claves, es seguro versionarlo.
 
 # Entornos virtuales
 venv/
+venv_py310/
+venv_py312/
 *.venv/
 env/
 ENV/
@@ -14,14 +17,18 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# Archivos de configuración sensibles
-.env
-
-# Bases de datos locales (ChromaDB puede ser grande)
+# Bases de datos locales generadas y cachés de ChromaDB
 datos/ChromaDB_V1/
+datos/ChromaDB_Test_Minimal/
+datos/ChromaDB_Test_Super_Minimal/
+*.duckdb.wal # Archivos temporales de DuckDB (usado por Chroma)
+*.duckdb # Archivos de DuckDB
 
-# Archivos de resultados (opcional, si no quieres versionarlos)
-# datos/Resultados/
+# Archivos de resultados generados
+datos/Resultados/
+
+# Modelos descargados localmente
+modelos_locales/
 
 # Archivos de IDEs y editores
 .vscode/
@@ -32,3 +39,32 @@ datos/ChromaDB_V1/
 # Archivos de sistema operativo
 .DS_Store
 Thumbs.db
+
+# Logs y archivos temporales específicos del proyecto (si los tuvieras)
+*.log
+temp_files/
+
+# PDFs, DOCs, DOCXs (¡DECISIÓN IMPORTANTE!)
+# Si quieres que los PDFs de BaseConocimiento y ProyectoAnalizar se suban,
+# COMENTA o ELIMINA las siguientes tres líneas.
+# Si NO quieres subirlos, déjalas o sé más específico (ver abajo).
+ *.pdf
+ *.docx
+ *.doc
+
+# Alternativa para PDFs (si quieres ignorar PDFs en general PERO NO los de datos específicos):
+# Puedes ignorar todos los PDFs y luego "des-ignorarlos" (re-incluirlos) para carpetas específicas,
+# aunque es más complejo. La forma más simple es:
+# 1. Si los PDFs de datos son PEQUEÑOS y NO confidenciales: elimina las líneas *.pdf, *.docx, *.doc.
+# 2. Si los PDFs de datos son GRANDES o CONFIDENCIALES: mantén las líneas *.pdf, etc.,
+#    o ignora específicamente las carpetas de datos si es más fácil:
+    # datos/BaseConocimiento/
+    # datos/ProyectoAnalizar/
+#    (Pero entonces necesitas proveer estos archivos a otros usuarios de otra forma).
+
+# Para tu caso, si los PDFs de BaseConocimiento y ProyectoAnalizar son los 1.5MB que mencionaste
+# y son necesarios para que el proyecto corra, te sugiero que SÍ los subas.
+# Por lo tanto, recomiendo ELIMINAR o COMENTAR:
+ *.pdf
+ *.docx
+ *.doc
