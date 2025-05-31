@@ -1,70 +1,51 @@
-# Archivos de configuración sensibles
-.env
-.env.example 
-# Considera si quieres versionar el ejemplo. Si lo haces, quita esta línea.
-# Si .env.example solo tiene la estructura sin claves, es seguro versionarlo.
-
-# Entornos virtuales
-venv/
-venv_py310/
-venv_py312/
-*.venv/
-env/
-ENV/
-
-# Archivos de Python compilados y caches
-__pycache__/
-*.py[cod]
-*$py.class
-
-# Bases de datos locales generadas y cachés de ChromaDB
-datos/ChromaDB_V1/
-datos/ChromaDB_Test_Minimal/
-datos/ChromaDB_Test_Super_Minimal/
-*.duckdb.wal # Archivos temporales de DuckDB (usado por Chroma)
-*.duckdb # Archivos de DuckDB
-
-# Archivos de resultados generados
-datos/Resultados/
-
-# Modelos descargados localmente
-modelos_locales/
-
-# Archivos de IDEs y editores
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Archivos de sistema operativo
-.DS_Store
-Thumbs.db
-
-# Logs y archivos temporales específicos del proyecto (si los tuvieras)
-*.log
-temp_files/
-
-# PDFs, DOCs, DOCXs (¡DECISIÓN IMPORTANTE!)
-# Si quieres que los PDFs de BaseConocimiento y ProyectoAnalizar se suban,
-# COMENTA o ELIMINA las siguientes tres líneas.
-# Si NO quieres subirlos, déjalas o sé más específico (ver abajo).
- *.pdf
- *.docx
- *.doc
-
-# Alternativa para PDFs (si quieres ignorar PDFs en general PERO NO los de datos específicos):
-# Puedes ignorar todos los PDFs y luego "des-ignorarlos" (re-incluirlos) para carpetas específicas,
-# aunque es más complejo. La forma más simple es:
-# 1. Si los PDFs de datos son PEQUEÑOS y NO confidenciales: elimina las líneas *.pdf, *.docx, *.doc.
-# 2. Si los PDFs de datos son GRANDES o CONFIDENCIALES: mantén las líneas *.pdf, etc.,
-#    o ignora específicamente las carpetas de datos si es más fácil:
-    # datos/BaseConocimiento/
-    # datos/ProyectoAnalizar/
-#    (Pero entonces necesitas proveer estos archivos a otros usuarios de otra forma).
-
-# Para tu caso, si los PDFs de BaseConocimiento y ProyectoAnalizar son los 1.5MB que mencionaste
-# y son necesarios para que el proyecto corra, te sugiero que SÍ los subas.
-# Por lo tanto, recomiendo ELIMINAR o COMENTAR:
- *.pdf
- *.docx
- *.doc
+   # Archivos de configuración sensibles
+   .env
+   
+   # Entornos virtuales
+   venv/
+    *.venv/
+   venv_py310/
+   venv_py311/
+   venv_py312/
+   
+   env/
+   ENV/
+   
+   # Archivos de Python compilados y caches
+   __pycache__/
+   *.py[cod]
+   *$py.class
+   
+   # Bases de datos locales generadas y cachés de ChromaDB
+   datos/ChromaDB_V1/
+   datos/ChromaDB_Test_Minimal/
+   datos/ChromaDB_Test_Super_Minimal/
+   *.duckdb
+   *.duckdb.wal
+   
+   # Archivos de resultados generados
+   datos/Resultados/
+   
+   # Modelos descargados localmente
+   modelos_locales/
+   
+   # Archivos de IDEs y editores
+   .vscode/
+   .idea/
+   *.swp
+   *.swo
+   
+   # Archivos de sistema operativo
+   .DS_Store
+   Thumbs.db
+   
+   # Logs y archivos temporales específicos del proyecto (si los tuvieras)
+   *.log
+   temp_files/
+   # Carga de Base de Conocimiento
+   # DECISIÓN: Si tus PDFs de ejemplo en datos/BaseConocimiento y datos/ProyectoAnalizar
+   # son pequeños y quieres que se incluyan en GitHub, comenta o elimina las siguientes líneas.
+   # Si son grandes o no quieres incluirlos, déjalas.
+   # *.pdf
+   # *.docx
+   # *.doc
