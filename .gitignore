@@ -1,51 +1,51 @@
-   # Archivos de configuración sensibles
-   .env
-   
-   # Entornos virtuales
-   venv/
-    *.venv/
-   venv_py310/
-   venv_py311/
-   venv_py312/
-   
-   env/
-   ENV/
-   
-   # Archivos de Python compilados y caches
-   __pycache__/
-   *.py[cod]
-   *$py.class
-   
-   # Bases de datos locales generadas y cachés de ChromaDB
-   datos/ChromaDB_V1/
-   datos/ChromaDB_Test_Minimal/
-   datos/ChromaDB_Test_Super_Minimal/
-   *.duckdb
-   *.duckdb.wal
-   
-   # Archivos de resultados generados
-   datos/Resultados/
-   
-   # Modelos descargados localmente
-   modelos_locales/
-   
-   # Archivos de IDEs y editores
-   .vscode/
-   .idea/
-   *.swp
-   *.swo
-   
-   # Archivos de sistema operativo
-   .DS_Store
-   Thumbs.db
-   
-   # Logs y archivos temporales específicos del proyecto (si los tuvieras)
-   *.log
-   temp_files/
-   # Carga de Base de Conocimiento
-   # DECISIÓN: Si tus PDFs de ejemplo en datos/BaseConocimiento y datos/ProyectoAnalizar
-   # son pequeños y quieres que se incluyan en GitHub, comenta o elimina las siguientes líneas.
-   # Si son grandes o no quieres incluirlos, déjalas.
-   # *.pdf
-   # *.docx
-   # *.doc
+# Archivos de configuración sensibles
+.env
+
+# Entornos virtuales
+venv/
+*.venv/
+venv_py310/
+venv_py311/
+venv_py312/
+
+env/
+ENV/
+
+# Archivos de Python compilados y caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Bases de datos locales generadas y cachés de ChromaDB
+datos/ChromaDB_V1/
+datos/ChromaDB_Test_Minimal/
+datos/ChromaDB_Test_Super_Minimal/
+*.duckdb
+*.duckdb.wal
+
+# Archivos de resultados generados
+datos/Resultados/
+
+# Modelos descargados localmente
+modelos_locales/
+
+# Archivos de IDEs y editores
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Archivos de sistema operativo
+.DS_Store
+Thumbs.db
+
+# Logs y archivos temporales específicos del proyecto (si los tuvieras)
+*.log
+temp_files/
+# Carga de Base de Conocimiento
+# DECISIÓN: Si tus PDFs de ejemplo en datos/BaseConocimiento y datos/ProyectoAnalizar
+# son pequeños y quieres que se incluyan en GitHub, comenta o elimina las siguientes líneas.
+# Si son grandes o no quieres incluirlos, déjalas.
+# *.pdf
+# *.docx
+# *.doc

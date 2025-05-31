@@ -4,12 +4,8 @@ import os
 
 def generar_dashboard_html(ruta_json_resultados, ruta_output_dashboard_html, lista_pdfs_base_conocimiento):
     """
-    Genera un dashboard HTML a partir de los resultados del análisis de riesgos.
-
-    Args:
-        ruta_json_resultados (str): Ruta al archivo JSON con los resultados del análisis.
-        ruta_output_dashboard_html (str): Ruta donde se guardará el archivo HTML del dashboard.
-        lista_pdfs_base_conocimiento (list): Lista de strings con los nombres de los PDFs de la base de conocimiento.
+    Genera un dashboard HTML mejorado a partir de los resultados del análisis de riesgos,
+    agrupando los riesgos por su estado RAG e incluyendo información de la tesis.
     """
     try:
         with open(ruta_json_resultados, 'r', encoding='utf-8') as f:
@@ -21,150 +17,116 @@ def generar_dashboard_html(ruta_json_resultados, ruta_output_dashboard_html, lis
         print(f"Error: No se pudo decodificar el archivo JSON en {ruta_json_resultados}")
         return
 
-    nombre_proyecto_analizado = datos_analisis.get("nombre_proyecto_analizado", "No especificado")
-    riesgos_estructurados = datos_analisis.get("riesgos_identificados_estructurados", [])
+    nombre_proyecto_analizado = datos_analisis.get("nombre_proyecto_analizado", "Proyecto No Especificado")
+    riesgos_identificados = datos_analisis.get("riesgos_identificados_estructurados", [])
 
-    # Mapeo de colores para los bordes de las tarjetas
-    color_map = {
-        "Rojo": "red",
-        "Ámbar": "orange", # O "gold" o "yellow"
-        "Verde": "green",
-        "Gris (Indeterminado)": "grey"
+    # Información de la tesis
+    titulo_tesis = "Sistema RAG para el Análisis de Riesgos en la Instalación de Maquinaria Industrial"
+    institucion_line1 = "ITBA - Instituto Tecnológico Buenos Aires"
+    institucion_line2 = "Maestría en Management & Analytics"
+    alumno = "Adriel Cuesta"
+
+
+    estado_map = {
+        "Rojo": {"clase": "rojo", "titulo": "Riesgos Altos (Rojo)"},
+        "Ámbar": {"clase": "ambar", "titulo": "Riesgos Medios (Ámbar/Naranja)"},
+        "Verde": {"clase": "verde", "titulo": "Riesgos Bajos (Verde)"},
+        "Gris (Indeterminado)": {"clase": "gris", "titulo": "Riesgos Indeterminados (Gris)"}
     }
 
-    # Inicio del HTML
+    riesgos_agrupados = { key: [] for key in estado_map }
+    for riesgo in riesgos_identificados:
+        estado = riesgo.get("estado_RAG_sugerido", "Gris (Indeterminado)")
+        riesgos_agrupados.get(estado, riesgos_agrupados["Gris (Indeterminado)"]).append(riesgo)
+
+    orden_secciones = ["Rojo", "Ámbar", "Verde", "Gris (Indeterminado)"]
+
     html_content = f"""
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Análisis de Riesgos del Proyecto: {nombre_proyecto_analizado}</title>
+    <title>Análisis de Riesgos: {nombre_proyecto_analizado}</title>
     <style>
-        body {{
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f4f7f6;
-            color: #333;
-        }}
-        .header-container {{
-            text-align: center;
-            margin-bottom: 30px;
-            padding: 20px;
-            background-color: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }}
-        .header-container h1 {{
-            color: #2c3e50;
-            margin-bottom: 5px;
-        }}
-        .header-container h2 {{
-            color: #555;
-            font-weight: normal;
-            font-size: 1.2em;
-            margin-top: 0;
-        }}
-        .dashboard-container {{
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }}
-        .risk-card {{
-            background-color: #ffffff;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            border-left-width: 5px;
-            border-left-style: solid;
-        }}
-        .risk-card h3 {{
-            margin-top: 0;
-            color: #34495e;
-            font-size: 1.1em;
-        }}
-        .risk-card p {{
-            font-size: 0.9em;
-            line-height: 1.6;
-            margin-bottom: 10px;
-        }}
-        .risk-card .details {{
-            font-weight: bold;
-            color: #7f8c8d;
-        }}
-        .footer-info {{
-            margin-top: 40px;
-            padding: 20px;
-            background-color: #e9ecef;
-            border-radius: 8px;
-            text-align: center;
-        }}
-        .footer-info h3 {{
-            color: #495057;
-            margin-bottom: 15px;
-        }}
-        .footer-info ul {{
-            list-style-type: none;
-            padding: 0;
-        }}
-        .footer-info li {{
-            display: inline-block;
-            margin: 0 10px;
-            padding: 5px 10px;
-            background-color: #ffffff;
-            border-radius: 4px;
-            font-size: 0.9em;
-            color: #007bff;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }}
-        /* Clases de colores para bordes */
-        {'.border-rojo { border-left-color: red; }'}
-        {'.border-ambar { border-left-color: orange; }'}
-        {'.border-verde { border-left-color: green; }'}
-        {'.border-gris { border-left-color: grey; }'}
+        body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #f0f2f5; color: #333; }}
+        .container {{ max-width: 1200px; margin: auto; }}
+        .main-header-container {{ text-align: center; margin-bottom: 15px; padding: 10px; }}
+        .main-header-container p {{ margin: 3px 0; font-size: 1.1em; color: #4a5568; }}
+        .main-header-container .institution {{ font-weight: bold; }}
+        .main-header-container .degree {{ font-style: italic; }}
+        .main-header-container .student {{ margin-top: 8px; }}
+        .project-header-container {{ text-align: center; margin-bottom: 30px; padding: 20px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }}
+        .project-header-container h1 {{ color: #1a2533; margin-bottom: 5px; font-size: 2em; }}
+        .project-header-container h2 {{ color: #4a5568; font-weight: 400; font-size: 1.2em; margin-top: 0; }}
+        .risk-section {{ margin-bottom: 30px; }}
+        .risk-section > h2 {{ font-size: 1.8em; color: #2c3e50; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; margin-bottom: 20px; }}
+        .dashboard-grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; }}
+        .risk-card {{ background-color: #ffffff; border-radius: 10px; padding: 20px; box-shadow: 0 3px 10px rgba(0,0,0,0.07); transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; border-top-width: 6px; border-top-style: solid; }}
+        .risk-card:hover {{ transform: translateY(-5px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }}
+        .risk-card h3 {{ margin-top: 0; color: #34495e; font-size: 1.2em; margin-bottom: 12px; }}
+        .risk-card p {{ font-size: 0.95em; line-height: 1.65; margin-bottom: 8px; }}
+        .risk-card .details-label {{ font-weight: 600; color: #555; }}
+        .risk-card .details-value {{ color: #222; font-weight: 500; }}
+        .footer-info, .thesis-title-footer {{ margin-top: 40px; padding: 20px; background-color: #34495e; color: #ecf0f1; border-radius: 12px; text-align: center; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }}
+        .footer-info h3, .thesis-title-footer h3 {{ color: #ffffff; margin-bottom: 15px; font-size: 1.3em; }}
+        .footer-info ul {{ list-style-type: none; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; }}
+        .footer-info li {{ margin: 5px 10px; padding: 8px 15px; background-color: #4a5568; color: #f0f2f5; border-radius: 6px; font-size: 0.9em; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }}
+        .risk-card.rojo {{ border-top-color: #e74c3c; }}
+        .risk-card.ambar {{ border-top-color: #f39c12; }}
+        .risk-card.verde {{ border-top-color: #2ecc71; }}
+        .risk-card.gris {{ border-top-color: #95a5a6; }}
     </style>
 </head>
 <body>
-    <div class="header-container">
-        <h1>Análisis de Riesgos del Proyecto</h1>
-        <h2>Proyecto: {nombre_proyecto_analizado}</h2>
-    </div>
+    <div class="container">
+        <div class="main-header-container">
+            <p class="institution">{institucion_line1}</p>
+            <p class="degree">{institucion_line2}</p>
+            <p class="student">Alumno: {alumno}</p>
+        </div>
 
-    <div class="dashboard-container">
-"""
-
-    # Generar tarjetas de riesgo
-    if riesgos_estructurados:
-        for riesgo in riesgos_estructurados:
-            descripcion = riesgo.get("descripcion_riesgo", "N/A")
-            explicacion = riesgo.get("explicacion_riesgo_llm", "N/A")
-            impacto = riesgo.get("impacto_estimado_llm", "N/A")
-            probabilidad = riesgo.get("probabilidad_estimada_llm", "N/A")
-            estado_rag = riesgo.get("estado_RAG_sugerido", "Gris (Indeterminado)")
-            
-            color_clase = "border-" + color_map.get(estado_rag, "gris").lower()
-
-            html_content += f"""
-        <div class="risk-card {color_clase}">
-            <h3>{descripcion}</h3>
-            <p>{explicacion}</p>
-            <p><span class="details">Impacto:</span> {impacto} | <span class="details">Probabilidad:</span> {probabilidad}</p>
+        <div class="project-header-container">
+            <h1>Análisis de Riesgos del Proyecto</h1>
+            <h2>Proyecto Analizado: {nombre_proyecto_analizado}</h2>
         </div>
 """
-    else:
-        html_content += "<p>No se identificaron riesgos estructurados en este análisis.</p>"
 
-    html_content += """
-    </div>
+    for estado_key in orden_secciones:
+        riesgos_en_seccion = riesgos_agrupados[estado_key]
+        info_estado = estado_map[estado_key]
+        
+        if riesgos_en_seccion:
+            html_content += f"""
+        <div class="risk-section">
+            <h2>{info_estado['titulo']}</h2>
+            <div class="dashboard-grid">
 """
+            for riesgo in riesgos_en_seccion:
+                descripcion = riesgo.get("descripcion_riesgo", "N/A")
+                explicacion = riesgo.get("explicacion_riesgo_llm", "N/A")
+                impacto = riesgo.get("impacto_estimado_llm", "N/A")
+                probabilidad = riesgo.get("probabilidad_estimada_llm", "N/A")
+                clase_color_tarjeta = info_estado['clase']
 
-    # Añadir información de la base de conocimiento
+                html_content += f"""
+                <div class="risk-card {clase_color_tarjeta}">
+                    <h3>{descripcion}</h3>
+                    <p>{explicacion}</p>
+                    <p><span class="details-label">Impacto:</span> <span class="details-value">{impacto}</span> | <span class="details-label">Probabilidad:</span> <span class="details-value">{probabilidad}</span></p>
+                </div>
+"""
+            html_content += """
+            </div> 
+        </div> 
+"""
+    if not riesgos_identificados:
+         html_content += "<p>No se identificaron riesgos estructurados en este análisis.</p>"
+
     if lista_pdfs_base_conocimiento:
         html_content += """
     <div class="footer-info">
-        <h3>Documentos de la Base de Conocimiento</h3>
+        <h3>Documentos de la Base de Conocimiento Utilizada</h3>
         <ul>
 """
         for pdf_name in lista_pdfs_base_conocimiento:
@@ -173,49 +135,21 @@ def generar_dashboard_html(ruta_json_resultados, ruta_output_dashboard_html, lis
         </ul>
     </div>
 """
-    else:
-        html_content += """
-    <div class="footer-info">
-        <h3>Documentos de la Base de Conocimiento</h3>
-        <p>No se especificaron documentos de la base de conocimiento.</p>
-    </div>
-"""
-
-    # Fin del HTML
-    html_content += """
+    html_content += f"""
+        <div class="thesis-title-footer">
+            <h3>Título del Trabajo: {titulo_tesis}</h3>
+        </div>
+    </div> 
 </body>
 </html>
 """
 
-    # Guardar el archivo HTML
     try:
         with open(ruta_output_dashboard_html, 'w', encoding='utf-8') as f_html:
             f_html.write(html_content)
-        print(f"Dashboard HTML generado exitosamente en: {ruta_output_dashboard_html}")
+        print(f"Dashboard HTML mejorado generado exitosamente en: {ruta_output_dashboard_html}")
     except IOError as e:
         print(f"Error al guardar el dashboard HTML en {ruta_output_dashboard_html}: {e}")
 
 if __name__ == '__main__':
-    # Ejemplo de uso para prueba (requiere un archivo JSON de ejemplo)
-    # print("Probando generación de dashboard...")
-    # dummy_json_path = "D:/tesismma/datos/Resultados/analisis_riesgos_Proyecto_a_analizar_v1_20250529_190000.json" # Reemplazar con un JSON real
-    # dummy_html_path = "D:/tesismma/datos/Resultados/analisis_riesgos_Proyecto_a_analizar_v1_20250529_190000_dashboard.html"
-    # dummy_bc_pdfs = ["Manual_Seguridad_General.pdf", "PMBOK_Guia_Riesgos.pdf", "Lecciones_Aprendidas_Instalaciones.pdf"]
-    
-    # Crear un JSON dummy si no existe para probar
-    # if not os.path.exists(dummy_json_path):
-    #     dummy_data = {
-    #         "nombre_proyecto_analizado": "Proyecto Ejemplo V1.0",
-    #         "riesgos_identificados_estructurados": [
-    #             {"descripcion_riesgo": "Falla eléctrica principal", "explicacion_riesgo_llm": "Debido a sobrecarga.", "impacto_estimado_llm": "Alto", "probabilidad_estimada_llm": "Media", "estado_RAG_sugerido": "Rojo"},
-    #             {"descripcion_riesgo": "Retraso en proveedor clave", "explicacion_riesgo_llm": "Capacidad limitada del proveedor.", "impacto_estimado_llm": "Medio", "probabilidad_estimada_llm": "Media", "estado_RAG_sugerido": "Ámbar"},
-    #             {"descripcion_riesgo": "Error menor en documentación", "explicacion_riesgo_llm": "Se detecta en revisión.", "impacto_estimado_llm": "Bajo", "probabilidad_estimada_llm": "Baja", "estado_RAG_sugerido": "Verde"}
-    #         ]
-    #     }
-    #     with open(dummy_json_path, 'w', encoding='utf-8') as f_dummy:
-    #         json.dump(dummy_data, f_dummy, indent=4)
-    #     print(f"JSON de prueba creado en {dummy_json_path}")
-
-    # generar_dashboard_html(dummy_json_path, dummy_html_path, dummy_bc_pdfs)
-    print("Módulo dashboard_generator.py cargado. Contiene funciones para generar el dashboard HTML.")
-
+    print("Módulo dashboard_generator.py cargado. Contiene funciones para generar el dashboard HTML mejorado.")
