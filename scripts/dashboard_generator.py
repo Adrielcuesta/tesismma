@@ -1,32 +1,41 @@
 # scripts/dashboard_generator.py
 import json
 import os
+import logging # Añadido
+import traceback # Añadido
+
+logger = logging.getLogger(__name__) # Añadido
 
 def generar_dashboard_html(ruta_json_resultados, ruta_output_dashboard_html, lista_pdfs_base_conocimiento):
-    """
-    Genera un dashboard HTML mejorado a partir de los resultados del análisis de riesgos,
-    agrupando los riesgos por su estado RAG e incluyendo información de la tesis.
-    """
     try:
         with open(ruta_json_resultados, 'r', encoding='utf-8') as f:
             datos_analisis = json.load(f)
     except FileNotFoundError:
-        print(f"Error: No se encontró el archivo JSON de resultados en {ruta_json_resultados}")
+        logger.error(f"No se encontró el archivo JSON de resultados en {ruta_json_resultados}") # CAMBIO
         return
     except json.JSONDecodeError:
-        print(f"Error: No se pudo decodificar el archivo JSON en {ruta_json_resultados}")
+        logger.error(f"No se pudo decodificar el archivo JSON en {ruta_json_resultados}") # CAMBIO
+        logger.debug(traceback.format_exc())
         return
+    except Exception as e_open: # Captura general para apertura de archivo
+        logger.error(f"Error inesperado al abrir/leer JSON en {ruta_json_resultados}: {e_open}")
+        logger.debug(traceback.format_exc())
+        return
+
 
     nombre_proyecto_analizado = datos_analisis.get("nombre_proyecto_analizado", "Proyecto No Especificado")
     riesgos_identificados = datos_analisis.get("riesgos_identificados_estructurados", [])
 
-    # Información de la tesis
+    # Información de la tesis (actualmente hardcodeada aquí, podría venir de config.INFO_TESIS)
+    # Si se pasa desde config.INFO_TESIS via main.py, esta función necesitaría un argumento más.
+    # Por ahora, mantenemos la lógica actual del archivo que me enviaste.
     titulo_tesis = "Sistema RAG para el Análisis de Riesgos en la Instalación de Maquinaria Industrial"
     institucion_line1 = "ITBA - Instituto Tecnológico Buenos Aires"
     institucion_line2 = "Maestría en Management & Analytics"
     alumno = "Adriel Cuesta"
 
-
+    # ... (resto del HTML y lógica de generación del dashboard sin cambios, ya que no usa print) ...
+    # Solo el print final cambia a logger
     estado_map = {
         "Rojo": {"clase": "rojo", "titulo": "Riesgos Altos (Rojo)"},
         "Ámbar": {"clase": "ambar", "titulo": "Riesgos Medios (Ámbar/Naranja)"},
@@ -37,10 +46,12 @@ def generar_dashboard_html(ruta_json_resultados, ruta_output_dashboard_html, lis
     riesgos_agrupados = { key: [] for key in estado_map }
     for riesgo in riesgos_identificados:
         estado = riesgo.get("estado_RAG_sugerido", "Gris (Indeterminado)")
+        # Asegurarse de que el estado sea una clave válida, sino, asignar a Gris
         riesgos_agrupados.get(estado, riesgos_agrupados["Gris (Indeterminado)"]).append(riesgo)
 
-    orden_secciones = ["Rojo", "Ámbar", "Verde", "Gris (Indeterminado)"]
 
+    orden_secciones = ["Rojo", "Ámbar", "Verde", "Gris (Indeterminado)"]
+    # ... (el f-string gigante para html_content permanece igual) ...
     html_content = f"""
 <!DOCTYPE html>
 <html lang="es">
@@ -91,11 +102,9 @@ def generar_dashboard_html(ruta_json_resultados, ruta_output_dashboard_html, lis
             <h2>Proyecto Analizado: {nombre_proyecto_analizado}</h2>
         </div>
 """
-
     for estado_key in orden_secciones:
         riesgos_en_seccion = riesgos_agrupados[estado_key]
         info_estado = estado_map[estado_key]
-        
         if riesgos_en_seccion:
             html_content += f"""
         <div class="risk-section">
@@ -108,7 +117,6 @@ def generar_dashboard_html(ruta_json_resultados, ruta_output_dashboard_html, lis
                 impacto = riesgo.get("impacto_estimado_llm", "N/A")
                 probabilidad = riesgo.get("probabilidad_estimada_llm", "N/A")
                 clase_color_tarjeta = info_estado['clase']
-
                 html_content += f"""
                 <div class="risk-card {clase_color_tarjeta}">
                     <h3>{descripcion}</h3>
@@ -122,7 +130,6 @@ def generar_dashboard_html(ruta_json_resultados, ruta_output_dashboard_html, lis
 """
     if not riesgos_identificados:
          html_content += "<p>No se identificaron riesgos estructurados en este análisis.</p>"
-
     if lista_pdfs_base_conocimiento:
         html_content += """
     <div class="footer-info">
@@ -143,13 +150,15 @@ def generar_dashboard_html(ruta_json_resultados, ruta_output_dashboard_html, lis
 </body>
 </html>
 """
-
     try:
         with open(ruta_output_dashboard_html, 'w', encoding='utf-8') as f_html:
             f_html.write(html_content)
-        print(f"Dashboard HTML mejorado generado exitosamente en: {ruta_output_dashboard_html}")
+        logger.info(f"Dashboard HTML mejorado generado exitosamente en: {ruta_output_dashboard_html}") # CAMBIO
     except IOError as e:
-        print(f"Error al guardar el dashboard HTML en {ruta_output_dashboard_html}: {e}")
+        logger.error(f"Error al guardar el dashboard HTML en {ruta_output_dashboard_html}: {e}") # CAMBIO
+        logger.debug(traceback.format_exc())
 
 if __name__ == '__main__':
-    print("Módulo dashboard_generator.py cargado. Contiene funciones para generar el dashboard HTML mejorado.")
+    if not logging.getLogger().handlers:
+        logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(name)s - %(message)s')
+    logger.info("Módulo dashboard_generator.py cargado.")

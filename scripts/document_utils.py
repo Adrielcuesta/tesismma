@@ -2,19 +2,61 @@
 import os
 from langchain_community.document_loaders import PyMuPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-# No es necesario importar config aquí si los parámetros se pasan a las funciones
+import logging
+import traceback
 
-def cargar_y_procesar_pdfs_de_carpeta(carpeta_path, chunk_size, chunk_overlap):
+logger = logging.getLogger(__name__)
+
+def obtener_ruta_pdf_proyecto(directorio_proyecto_analizar):
+    """
+    Obtiene la ruta del único PDF en el directorio especificado.
+    Retorna la ruta absoluta o None si no se encuentra o hay más de uno.
+    """
+    if not os.path.isdir(directorio_proyecto_analizar):
+        logger.error(f"El directorio para el proyecto a analizar no existe: {directorio_proyecto_analizar}")
+        return None
+    try:
+        pdfs_en_directorio = [f for f in os.listdir(directorio_proyecto_analizar) if f.lower().endswith(".pdf")]
+        if not pdfs_en_directorio:
+            logger.error(f"No se encontraron archivos PDF en la carpeta '{directorio_proyecto_analizar}'.")
+            return None
+        if len(pdfs_en_directorio) > 1:
+            logger.error(f"Se encontraron múltiples archivos PDF en '{directorio_proyecto_analizar}'. Solo debe haber uno.")
+            logger.error(f"Archivos encontrados: {pdfs_en_directorio}")
+            return None
+        nombre_pdf_proyecto = pdfs_en_directorio[0]
+        return os.path.join(directorio_proyecto_analizar, nombre_pdf_proyecto)
+    except Exception as e:
+        logger.error(f"Error al intentar obtener PDF del proyecto en '{directorio_proyecto_analizar}': {e}")
+        logger.debug(traceback.format_exc())
+        return None
+
+def listar_documentos_kb(directorio_base_conocimiento):
+    """
+    Lista los nombres de los archivos PDF en el directorio de la base de conocimiento.
+    """
+    lista_pdfs = []
+    try:
+        if os.path.exists(directorio_base_conocimiento) and os.path.isdir(directorio_base_conocimiento):
+            lista_pdfs = [f for f in os.listdir(directorio_base_conocimiento) if f.lower().endswith(".pdf")]
+        if not lista_pdfs: # Log como warning si la carpeta existe pero está vacía
+            logger.warning(f"No se encontraron PDFs en la carpeta de base de conocimiento: {directorio_base_conocimiento}")
+    except Exception as e:
+        logger.error(f"Error al listar PDFs de la base de conocimiento en '{directorio_base_conocimiento}': {e}")
+        logger.debug(traceback.format_exc())
+    return lista_pdfs
+
+def cargar_y_procesar_pdfs_de_carpeta(carpeta_path, chunk_size, chunk_overlap): # Nombre de tu función original
     """
     Carga todos los archivos PDF de una carpeta, los divide en fragmentos
     y añade metadatos básicos.
     """
     documentos_cargados = []
     if not os.path.isdir(carpeta_path):
-        print(f"Error: La carpeta de base de conocimiento especificada no existe: {carpeta_path}")
+        logger.error(f"Error: La carpeta de base de conocimiento especificada no existe: {carpeta_path}")
         return []
 
-    print(f"Procesando PDFs desde la carpeta de base de conocimiento: {carpeta_path}")
+    logger.info(f"Procesando PDFs desde la carpeta de base de conocimiento: {carpeta_path}")
     pdf_files_found = False
     for filename in os.listdir(carpeta_path):
         if filename.lower().endswith(".pdf"):
@@ -22,50 +64,56 @@ def cargar_y_procesar_pdfs_de_carpeta(carpeta_path, chunk_size, chunk_overlap):
             file_path = os.path.join(carpeta_path, filename)
             try:
                 loader = PyMuPDFLoader(file_path)
-                docs_del_pdf = loader.load() # Cada página es un Document
-
-                for i, doc_page in enumerate(docs_del_pdf):
+                docs_del_pdf = loader.load()
+                for doc_page in docs_del_pdf:
                     doc_page.metadata["source_document"] = filename
-                    # PyMuPDFLoader ya incluye 'page' (0-indexed), lo hacemos 1-indexed
                     doc_page.metadata["page_number"] = doc_page.metadata.get('page', -1) + 1
-                
                 documentos_cargados.extend(docs_del_pdf)
-                print(f"  Cargado y procesado preliminarmente: {filename} ({len(docs_del_pdf)} páginas)")
+                logger.info(f"  Cargado y procesado preliminarmente: {filename} ({len(docs_del_pdf)} páginas)")
             except Exception as e:
-                print(f"  Error al cargar o procesar {filename}: {e}")
+                logger.error(f"  Error al cargar o procesar {filename}: {e}")
+                logger.debug(traceback.format_exc())
     
     if not pdf_files_found:
-        print(f"Advertencia: No se encontraron archivos PDF en la carpeta: {carpeta_path}")
+        logger.warning(f"No se encontraron archivos PDF en la carpeta: {carpeta_path}")
         return []
     if not documentos_cargados:
-        print(f"No se pudieron cargar documentos PDF válidos de: {carpeta_path}")
+        logger.error(f"No se pudieron cargar documentos PDF válidos de: {carpeta_path}")
         return []
 
-    text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=chunk_size,
-        chunk_overlap=chunk_overlap,
-        length_function=len,
-        add_start_index=True # Útil para referenciar el origen del chunk
-    )
-    fragmentos = text_splitter.split_documents(documentos_cargados)
-    print(f"Total de fragmentos generados de la carpeta '{os.path.basename(carpeta_path)}': {len(fragmentos)}")
-    return fragmentos
+    try:
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap,
+            length_function=len,
+            add_start_index=True
+        )
+        fragmentos = text_splitter.split_documents(documentos_cargados)
+        logger.info(f"Total de fragmentos generados de la carpeta '{os.path.basename(carpeta_path)}': {len(fragmentos)}")
+        return fragmentos
+    except Exception as e:
+        logger.error(f"Error durante la división de texto: {e}")
+        logger.debug(traceback.format_exc())
+        return []
 
-def procesar_pdf_proyecto_para_analisis(ruta_pdf_proyecto, chunk_size, chunk_overlap, max_chars_proyecto):
+def procesar_pdf_proyecto_para_analisis(ruta_pdf_proyecto, chunk_size, chunk_overlap, max_chars_proyecto): # Nombre de tu función original
     """
-    Carga y procesa el PDF del proyecto a analizar, lo fragmenta y concatena su contenido.
+    Carga y procesa el PDF del proyecto a analizar, lo fragmenta y concatena su contenido, truncando si es necesario.
     Retorna el texto concatenado o None si hay error.
     """
     if not os.path.exists(ruta_pdf_proyecto):
-        print(f"Error: El archivo PDF del proyecto a analizar no existe: {ruta_pdf_proyecto}")
+        logger.error(f"Error: El archivo PDF del proyecto a analizar no existe: {ruta_pdf_proyecto}")
         return None
 
-    print(f"\n--- Procesando el documento para análisis: {os.path.basename(ruta_pdf_proyecto)} ---")
+    logger.info(f"Procesando el documento para análisis: {os.path.basename(ruta_pdf_proyecto)}")
     try:
         loader_proyecto = PyMuPDFLoader(ruta_pdf_proyecto)
         doc_proyecto_raw = loader_proyecto.load()
 
-        # Añadir metadatos (aunque no se usen directamente para la consulta, es buena práctica)
+        if not doc_proyecto_raw: # Si el PDF está vacío o no se puede cargar
+            logger.warning(f"No se pudo cargar contenido de {os.path.basename(ruta_pdf_proyecto)}.")
+            return f"Análisis del proyecto contenido en el archivo {os.path.basename(ruta_pdf_proyecto)} (documento vacío o no cargable)."
+
         for page_doc in doc_proyecto_raw:
             page_doc.metadata["source_document"] = os.path.basename(ruta_pdf_proyecto)
             page_doc.metadata["page_number"] = page_doc.metadata.get('page', -1) + 1
@@ -79,37 +127,28 @@ def procesar_pdf_proyecto_para_analisis(ruta_pdf_proyecto, chunk_size, chunk_ove
         fragmentos_proyecto = text_splitter_proyecto.split_documents(doc_proyecto_raw)
 
         if not fragmentos_proyecto:
-            print(f"Advertencia: No se pudieron extraer fragmentos de {os.path.basename(ruta_pdf_proyecto)}.")
-            # Crear una descripción mínima si no hay fragmentos para evitar error en invoke
-            return f"Análisis del proyecto contenido en el archivo {os.path.basename(ruta_pdf_proyecto)} (no se pudo extraer contenido detallado para la consulta)."
+            logger.warning(f"No se pudieron extraer fragmentos de {os.path.basename(ruta_pdf_proyecto)}.")
+            return f"Análisis del proyecto contenido en el archivo {os.path.basename(ruta_pdf_proyecto)} (no se pudo extraer contenido detallado)."
         
-        # Concatenar el contenido de todos los fragmentos del PDF del proyecto
         descripcion_nuevo_proyecto = "\n\n".join([fp.page_content for fp in fragmentos_proyecto])
-        print(f"Descripción del nuevo proyecto generada a partir de {len(fragmentos_proyecto)} fragmentos.")
+        logger.info(f"Descripción del nuevo proyecto generada a partir de {len(fragmentos_proyecto)} fragmentos, {len(descripcion_nuevo_proyecto)} caracteres.")
         
-        # Truncar si es necesario (Gemini 1.5 Flash tiene un límite grande, pero es bueno ser precavido)
         if len(descripcion_nuevo_proyecto) > max_chars_proyecto:
-            print(f"Advertencia: La descripción del proyecto es muy larga ({len(descripcion_nuevo_proyecto)} caracteres). Se truncará a {max_chars_proyecto} caracteres para la API.")
+            logger.warning(f"La descripción del proyecto es muy larga ({len(descripcion_nuevo_proyecto)} caracteres). Se truncará a {max_chars_proyecto} caracteres.")
             descripcion_nuevo_proyecto = descripcion_nuevo_proyecto[:max_chars_proyecto]
         
         if not descripcion_nuevo_proyecto.strip():
-            print("Error: La descripción del proyecto a analizar está vacía después del procesamiento.")
-            return None
+            logger.error("Error: La descripción del proyecto a analizar está vacía después del procesamiento.")
+            return "Análisis del proyecto contenido en el archivo {os.path.basename(ruta_pdf_proyecto)} (contenido vacío después del procesamiento)."
             
         return descripcion_nuevo_proyecto
 
     except Exception as e_proc_proyecto:
-        print(f"Error crítico al procesar el PDF del proyecto '{os.path.basename(ruta_pdf_proyecto)}': {e_proc_proyecto}")
+        logger.error(f"Error crítico al procesar el PDF del proyecto '{os.path.basename(ruta_pdf_proyecto)}': {e_proc_proyecto}")
+        logger.debug(traceback.format_exc())
         return None
 
 if __name__ == '__main__':
-    # Pequeña prueba si se ejecuta directamente (requiere config.py en el mismo nivel o PYTHONPATH)
-    # from config import DOCS_BASE_CONOCIMIENTO_PATH, CHUNK_SIZE, CHUNK_OVERLAP, inicializar_directorios_datos
-    # inicializar_directorios_datos()
-    # print("Probando carga de documentos de la base de conocimiento...")
-    # fragmentos_test = cargar_y_procesar_pdfs_de_carpeta(DOCS_BASE_CONOCIMIENTO_PATH, CHUNK_SIZE, CHUNK_OVERLAP)
-    # if fragmentos_test:
-    #     print(f"Prueba: Se cargaron {len(fragmentos_test)} fragmentos.")
-    # else:
-    #     print("Prueba: No se cargaron fragmentos. Verifica la ruta y los PDFs.")
-    print("Módulo document_utils.py cargado. Contiene funciones para procesar PDFs.")
+    if not logging.getLogger().handlers:
+        logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(name)s - %(message)s')
+    logger.info("Módulo document_utils.py cargado.")
