@@ -1,0 +1,66 @@
+# Archivos y carpetas de Git
+.git
+.gitignore
+
+# Entornos virtuales de Python (asegúrate de que coincida con el nombre de tu venv)
+venv/
+venv_py312/
+*.venv
+
+# Archivos de caché de Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Archivos de entorno local (NUNCA deben ir en la imagen)
+.env
+*.env.local
+*.env.*.local
+
+# Bases de datos ChromaDB generadas localmente y resultados
+# La aplicación en el contenedor las creará dentro del contenedor si es necesario.
+datos/ChromaDB_V1/
+datos/Resultados/
+
+# Modelos locales descargados 
+# Si la estrategia en la nube es descargar desde Hugging Face, no los necesitas en la imagen.
+# Si tu Dockerfile los copia explícitamente desde una subcarpeta, entonces no ignores esa subcarpeta.
+# Nuestro Dockerfile actual no copia modelos locales, asume descarga o uso desde config.
+#modelos_locales/
+
+# Cache de Hugging Face local (si lo tienes en el proyecto y no lo quieres en la imagen)
+#.cache/huggingface_cache/
+# O si tienes una carpeta .cache más general
+# .cache/
+
+# Notebooks y documentación (no necesarios para la ejecución de la app)
+notebooks_documentacion/
+*.ipynb
+# Puedes ser más específico con los README si alguno SÍ debe ir, ej:
+# README.md 
+# Pero si el README principal es solo para desarrollo, ignóralo.
+#*.md 
+
+# Otros archivos específicos de tu editor o SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Archivos de prueba si no son necesarios en producción
+# scripts/test_chroma_super_minimal.py
+
+# Archivos de log locales
+*.log
+logs/
+
+# Cualquier archivo de salida o temporal grande
+*.zip
+*.tar.gz
+output/
+dist/
+build/
+
+# Si tienes una carpeta con datos de ejemplo muy grandes que no deben ir
+# datos/ejemplos_grandes/

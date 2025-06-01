@@ -1,57 +1,54 @@
 # scripts/dashboard_generator.py
 import json
 import os
-import logging # Añadido
-import traceback # Añadido
+import logging
+import traceback
 
-logger = logging.getLogger(__name__) # Añadido
+logger = logging.getLogger(__name__)
 
 def generar_dashboard_html(ruta_json_resultados, ruta_output_dashboard_html, lista_pdfs_base_conocimiento):
+    # La información de la tesis ahora se toma de config.INFO_TESIS,
+    # que main.py pasa (o debería pasar) a esta función si es necesario.
+    # O, si se mantiene hardcodeada aquí, está bien para esta etapa.
+    # Por ahora, usaremos los valores hardcodeados como en tu versión original.
+    # Si INFO_TESIS se pasara desde config, aquí la recibirías como un argumento.
+
     try:
         with open(ruta_json_resultados, 'r', encoding='utf-8') as f:
             datos_analisis = json.load(f)
     except FileNotFoundError:
-        logger.error(f"No se encontró el archivo JSON de resultados en {ruta_json_resultados}") # CAMBIO
+        logger.error(f"No se encontró el archivo JSON de resultados en {ruta_json_resultados}")
         return
     except json.JSONDecodeError:
-        logger.error(f"No se pudo decodificar el archivo JSON en {ruta_json_resultados}") # CAMBIO
+        logger.error(f"No se pudo decodificar el archivo JSON en {ruta_json_resultados}")
         logger.debug(traceback.format_exc())
         return
-    except Exception as e_open: # Captura general para apertura de archivo
+    except Exception as e_open:
         logger.error(f"Error inesperado al abrir/leer JSON en {ruta_json_resultados}: {e_open}")
         logger.debug(traceback.format_exc())
         return
 
-
     nombre_proyecto_analizado = datos_analisis.get("nombre_proyecto_analizado", "Proyecto No Especificado")
     riesgos_identificados = datos_analisis.get("riesgos_identificados_estructurados", [])
 
-    # Información de la tesis (actualmente hardcodeada aquí, podría venir de config.INFO_TESIS)
-    # Si se pasa desde config.INFO_TESIS via main.py, esta función necesitaría un argumento más.
-    # Por ahora, mantenemos la lógica actual del archivo que me enviaste.
+    # Información de la tesis (hardcodeada como en tu original)
     titulo_tesis = "Sistema RAG para el Análisis de Riesgos en la Instalación de Maquinaria Industrial"
     institucion_line1 = "ITBA - Instituto Tecnológico Buenos Aires"
     institucion_line2 = "Maestría en Management & Analytics"
     alumno = "Adriel Cuesta"
 
-    # ... (resto del HTML y lógica de generación del dashboard sin cambios, ya que no usa print) ...
-    # Solo el print final cambia a logger
     estado_map = {
         "Rojo": {"clase": "rojo", "titulo": "Riesgos Altos (Rojo)"},
         "Ámbar": {"clase": "ambar", "titulo": "Riesgos Medios (Ámbar/Naranja)"},
         "Verde": {"clase": "verde", "titulo": "Riesgos Bajos (Verde)"},
         "Gris (Indeterminado)": {"clase": "gris", "titulo": "Riesgos Indeterminados (Gris)"}
     }
-
     riesgos_agrupados = { key: [] for key in estado_map }
     for riesgo in riesgos_identificados:
         estado = riesgo.get("estado_RAG_sugerido", "Gris (Indeterminado)")
-        # Asegurarse de que el estado sea una clave válida, sino, asignar a Gris
         riesgos_agrupados.get(estado, riesgos_agrupados["Gris (Indeterminado)"]).append(riesgo)
-
-
     orden_secciones = ["Rojo", "Ámbar", "Verde", "Gris (Indeterminado)"]
-    # ... (el f-string gigante para html_content permanece igual) ...
+
     html_content = f"""
 <!DOCTYPE html>
 <html lang="es">
@@ -96,7 +93,6 @@ def generar_dashboard_html(ruta_json_resultados, ruta_output_dashboard_html, lis
             <p class="degree">{institucion_line2}</p>
             <p class="student">Alumno: {alumno}</p>
         </div>
-
         <div class="project-header-container">
             <h1>Análisis de Riesgos del Proyecto</h1>
             <h2>Proyecto Analizado: {nombre_proyecto_analizado}</h2>
@@ -153,9 +149,9 @@ def generar_dashboard_html(ruta_json_resultados, ruta_output_dashboard_html, lis
     try:
         with open(ruta_output_dashboard_html, 'w', encoding='utf-8') as f_html:
             f_html.write(html_content)
-        logger.info(f"Dashboard HTML mejorado generado exitosamente en: {ruta_output_dashboard_html}") # CAMBIO
+        logger.info(f"Dashboard HTML generado exitosamente en: {ruta_output_dashboard_html}")
     except IOError as e:
-        logger.error(f"Error al guardar el dashboard HTML en {ruta_output_dashboard_html}: {e}") # CAMBIO
+        logger.error(f"Error al guardar el dashboard HTML en {ruta_output_dashboard_html}: {e}")
         logger.debug(traceback.format_exc())
 
 if __name__ == '__main__':

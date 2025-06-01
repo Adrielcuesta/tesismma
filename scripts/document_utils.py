@@ -8,10 +8,6 @@ import traceback
 logger = logging.getLogger(__name__)
 
 def obtener_ruta_pdf_proyecto(directorio_proyecto_analizar):
-    """
-    Obtiene la ruta del único PDF en el directorio especificado.
-    Retorna la ruta absoluta o None si no se encuentra o hay más de uno.
-    """
     if not os.path.isdir(directorio_proyecto_analizar):
         logger.error(f"El directorio para el proyecto a analizar no existe: {directorio_proyecto_analizar}")
         return None
@@ -32,14 +28,11 @@ def obtener_ruta_pdf_proyecto(directorio_proyecto_analizar):
         return None
 
 def listar_documentos_kb(directorio_base_conocimiento):
-    """
-    Lista los nombres de los archivos PDF en el directorio de la base de conocimiento.
-    """
     lista_pdfs = []
     try:
         if os.path.exists(directorio_base_conocimiento) and os.path.isdir(directorio_base_conocimiento):
             lista_pdfs = [f for f in os.listdir(directorio_base_conocimiento) if f.lower().endswith(".pdf")]
-        if not lista_pdfs: # Log como warning si la carpeta existe pero está vacía
+        if not lista_pdfs:
             logger.warning(f"No se encontraron PDFs en la carpeta de base de conocimiento: {directorio_base_conocimiento}")
     except Exception as e:
         logger.error(f"Error al listar PDFs de la base de conocimiento en '{directorio_base_conocimiento}': {e}")
@@ -47,10 +40,6 @@ def listar_documentos_kb(directorio_base_conocimiento):
     return lista_pdfs
 
 def cargar_y_procesar_pdfs_de_carpeta(carpeta_path, chunk_size, chunk_overlap): # Nombre de tu función original
-    """
-    Carga todos los archivos PDF de una carpeta, los divide en fragmentos
-    y añade metadatos básicos.
-    """
     documentos_cargados = []
     if not os.path.isdir(carpeta_path):
         logger.error(f"Error: La carpeta de base de conocimiento especificada no existe: {carpeta_path}")
@@ -97,10 +86,6 @@ def cargar_y_procesar_pdfs_de_carpeta(carpeta_path, chunk_size, chunk_overlap): 
         return []
 
 def procesar_pdf_proyecto_para_analisis(ruta_pdf_proyecto, chunk_size, chunk_overlap, max_chars_proyecto): # Nombre de tu función original
-    """
-    Carga y procesa el PDF del proyecto a analizar, lo fragmenta y concatena su contenido, truncando si es necesario.
-    Retorna el texto concatenado o None si hay error.
-    """
     if not os.path.exists(ruta_pdf_proyecto):
         logger.error(f"Error: El archivo PDF del proyecto a analizar no existe: {ruta_pdf_proyecto}")
         return None
@@ -110,17 +95,20 @@ def procesar_pdf_proyecto_para_analisis(ruta_pdf_proyecto, chunk_size, chunk_ove
         loader_proyecto = PyMuPDFLoader(ruta_pdf_proyecto)
         doc_proyecto_raw = loader_proyecto.load()
 
-        if not doc_proyecto_raw: # Si el PDF está vacío o no se puede cargar
+        if not doc_proyecto_raw:
             logger.warning(f"No se pudo cargar contenido de {os.path.basename(ruta_pdf_proyecto)}.")
             return f"Análisis del proyecto contenido en el archivo {os.path.basename(ruta_pdf_proyecto)} (documento vacío o no cargable)."
 
         for page_doc in doc_proyecto_raw:
             page_doc.metadata["source_document"] = os.path.basename(ruta_pdf_proyecto)
             page_doc.metadata["page_number"] = page_doc.metadata.get('page', -1) + 1
-
+        
+        # Si el texto es para una consulta directa al LLM, a veces es mejor no fragmentarlo tanto,
+        # o usar un chunk_size grande. Aquí se concatenará.
         text_splitter_proyecto = RecursiveCharacterTextSplitter(
-            chunk_size=chunk_size,
-            chunk_overlap=chunk_overlap,
+            # Usar parámetros más grandes o simplemente concatenar si la fragmentación no es deseada aquí
+            chunk_size=chunk_size * 5, # Ejemplo: chunks más grandes para el texto del proyecto
+            chunk_overlap=chunk_overlap * 2,
             length_function=len,
             add_start_index=True
         )
@@ -139,7 +127,8 @@ def procesar_pdf_proyecto_para_analisis(ruta_pdf_proyecto, chunk_size, chunk_ove
         
         if not descripcion_nuevo_proyecto.strip():
             logger.error("Error: La descripción del proyecto a analizar está vacía después del procesamiento.")
-            return "Análisis del proyecto contenido en el archivo {os.path.basename(ruta_pdf_proyecto)} (contenido vacío después del procesamiento)."
+            # Devolver un string indicando vacío para que el LLM sepa que no hay contenido.
+            return f"El documento del proyecto '{os.path.basename(ruta_pdf_proyecto)}' parece estar vacío o no contiene texto extraíble."
             
         return descripcion_nuevo_proyecto
 

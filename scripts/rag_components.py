@@ -2,9 +2,10 @@
 from langchain.chains import RetrievalQA
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.prompts import PromptTemplate
-import logging # Añadido
+import logging
+import traceback
 
-logger = logging.getLogger(__name__) # Añadido
+logger = logging.getLogger(__name__)
 
 PROMPT_TEMPLATE_STR = """
 Eres un asistente de IA altamente especializado en la identificación y evaluación de riesgos para proyectos de instalación de maquinaria industrial, basándote en el Project Management Body of Knowledge (PMBOK) y documentación técnica.
@@ -39,7 +40,7 @@ Comienza tu respuesta JSON:
 
 def get_llm_instance(model_name, gemini_api_key):
     if not gemini_api_key:
-        logger.error("GEMINI_API_KEY no proporcionada para inicializar el LLM.") # CAMBIO a logger
+        logger.error("GEMINI_API_KEY no proporcionada para inicializar el LLM.")
         return None
     try:
         llm = ChatGoogleGenerativeAI(
@@ -47,23 +48,24 @@ def get_llm_instance(model_name, gemini_api_key):
             google_api_key=gemini_api_key,
             temperature=0.3,
         )
-        logger.info(f"--- LLM ({model_name}) configurado exitosamente ---") # CAMBIO a logger
+        logger.info(f"--- LLM ({model_name}) configurado exitosamente ---")
         return llm
     except Exception as e:
-        logger.error(f"Error al configurar el LLM ({model_name}): {e}") # CAMBIO a logger
+        logger.error(f"Error al configurar el LLM ({model_name}): {e}")
+        logger.debug(traceback.format_exc())
         return None
 
 def crear_cadena_rag(llm, vector_db_instance, k_retrieved_docs):
     if not llm:
-        logger.error("Instancia LLM no proporcionada para crear la cadena RAG.") # CAMBIO a logger
+        logger.error("Instancia LLM no proporcionada para crear la cadena RAG.")
         return None
     if not vector_db_instance:
-        logger.error("Instancia de Vector DB no proporcionada para crear la cadena RAG.") # CAMBIO a logger
+        logger.error("Instancia de Vector DB no proporcionada para crear la cadena RAG.")
         return None
     
     try:
         retriever = vector_db_instance.as_retriever(search_kwargs={"k": k_retrieved_docs})
-        logger.info(f"--- Retriever configurado para obtener {k_retrieved_docs} fragmentos ---") # CAMBIO a logger
+        logger.info(f"--- Retriever configurado para obtener {k_retrieved_docs} fragmentos ---")
 
         prompt = PromptTemplate(
             template=PROMPT_TEMPLATE_STR,
@@ -77,13 +79,14 @@ def crear_cadena_rag(llm, vector_db_instance, k_retrieved_docs):
             return_source_documents=True,
             chain_type_kwargs={"prompt": prompt}
         )
-        logger.info("--- Cadena RetrievalQA creada exitosamente ---") # CAMBIO a logger
+        logger.info("--- Cadena RetrievalQA creada exitosamente ---")
         return qa_chain
     except Exception as e:
-        logger.error(f"Error al crear la cadena RetrievalQA: {e}") # CAMBIO a logger
+        logger.error(f"Error al crear la cadena RetrievalQA: {e}")
+        logger.debug(traceback.format_exc())
         return None
 
 if __name__ == '__main__':
     if not logging.getLogger().handlers:
         logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(name)s - %(message)s')
-    logger.info("Módulo rag_components.py cargado. Contiene funciones para LLM y cadena RAG.")
+    logger.info("Módulo rag_components.py cargado.")

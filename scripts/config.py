@@ -28,7 +28,7 @@ DATA_DIR = os.path.join(PROJECT_ROOT, "datos")
 DIRECTORIO_BASE_CONOCIMIENTO = os.path.join(DATA_DIR, "BaseConocimiento")
 DIRECTORIO_PROYECTO_ANALIZAR = os.path.join(DATA_DIR, "ProyectoAnalizar")
 CHROMA_DB_PATH = os.path.join(DATA_DIR, "ChromaDB_V1")
-DIRECTORIO_RESULTADOS = os.path.join(DATA_DIR, "Resultados") # main.py espera este nombre
+DIRECTORIO_RESULTADOS = os.path.join(DATA_DIR, "Resultados")
 MODELOS_LOCALES_PATH = os.path.join(PROJECT_ROOT, "modelos_locales")
 CACHE_DIR_HF = os.path.join(PROJECT_ROOT, ".cache", "huggingface_cache")
 
@@ -54,7 +54,7 @@ else:
 
 CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 150
-GEMINI_MODEL_NAME = 'gemini-1.5-flash-latest' # main.py espera este nombre
+GEMINI_MODEL_NAME = 'gemini-1.5-flash-latest' # Usado por main.py
 K_RETRIEVED_DOCS = 3
 MAX_CHARS_PROYECTO = 32000
 RECREAR_DB = True
@@ -104,16 +104,19 @@ def inicializar_directorios_datos():
         return False
 
 if __name__ == '__main__':
-    if not logging.getLogger().handlers:
+    # Configurar un logger básico si se ejecuta config.py directamente para pruebas
+    if not logging.getLogger().handlers: # Chequea el root logger
         logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(name)s - %(message)s', datefmt='%H:%M:%S')
+
     logger.info("--- [INICIO] Ejecutando config.py directamente para verificación ---")
     inicializar_directorios_datos()
     configure_google_api()
     logger.info(f"GEMINI_API_KEY disponible: {'Sí' if GEMINI_API_KEY else 'No'}")
     logger.info(f"PROJECT_ROOT: {PROJECT_ROOT}")
     logger.info(f"EMBEDDING_MODEL_NAME_OR_PATH: '{EMBEDDING_MODEL_NAME_OR_PATH}'")
-    logger.info(f"DIRECTORIO_PROYECTO_ANALIZAR: {DIRECTORIO_PROYECTO_ANALIZAR}")
-    logger.info(f"DIRECTORIO_RESULTADOS: {DIRECTORIO_RESULTADOS}")
+    logger.info(f"DIRECTORIO_PROYECTO_ANALIZAR: {DIRECTORIO_PROYECTO_ANALIZAR}") # Nombre corregido
+    logger.info(f"DIRECTORIO_BASE_CONOCIMIENTO: {DIRECTORIO_BASE_CONOCIMIENTO}") # Nombre corregido
+    logger.info(f"DIRECTORIO_RESULTADOS: {DIRECTORIO_RESULTADOS}") # Nombre corregido
     logger.info(f"RECREAR_DB: {RECREAR_DB}")
     logger.info(f"INFO_TESIS: {INFO_TESIS}")
     logger.info("--- [FIN] Verificación de config.py ---")

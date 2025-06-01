@@ -2,8 +2,8 @@
 FROM python:3.12-slim-bookworm AS builder
 
 # Establecer variables de entorno recomendadas para Python
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
 # Establecer el directorio de trabajo para esta etapa
 WORKDIR /opt/venv

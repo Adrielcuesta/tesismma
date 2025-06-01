@@ -21,9 +21,9 @@ if not logger.handlers:
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(name)s - %(message)s', datefmt='%H:%M:%S')
     console_handler.setFormatter(formatter)
     logger.addHandler(console_handler)
-    logger.propagate = False
+    logger.propagate = False # Evita logs duplicados si el root logger también tiene handler
 
-if not logging.getLogger().handlers:
+if not logging.getLogger().handlers: # Fallback para el root logger
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s - %(levelname)s - %(name)s - ROOT - %(module)s.%(funcName)s - %(message)s',
@@ -92,7 +92,6 @@ def run_analysis():
         if not config.GEMINI_API_KEY: 
             logger.error("Error fatal: GEMINI_API_KEY no está disponible.")
             return None
-        # Usar GEMINI_MODEL_NAME de config.py
         llm = rag_components.get_llm_instance(config.GEMINI_MODEL_NAME, config.GEMINI_API_KEY)
         if not llm:
             logger.error("Error fatal: No se pudo inicializar el LLM (main.py).")
@@ -106,7 +105,6 @@ def run_analysis():
 
         logger.info("--- ETAPA 5: Procesando Documento del Proyecto a Analizar ---")
         start_time_proc_pdf = time.time()
-        # Llamar a la función que tienes en tu document_utils.py
         descripcion_nuevo_proyecto = document_utils.procesar_pdf_proyecto_para_analisis(
             pdf_path_analizar_abs,
             config.CHUNK_SIZE,
@@ -136,8 +134,9 @@ def run_analysis():
                 fuentes_recuperadas_docs = []
                 logger.warning("La respuesta de la cadena RAG no fue un diccionario como se esperaba.")
 
-            if resultado_analisis_llm_str:
+            if resultado_analisis_llm_str and resultado_analisis_llm_str.strip(): # Check for non-empty string
                 logger.info("Respuesta del LLM recibida.")
+                logger.debug(f"Respuesta LLM (raw): {resultado_analisis_llm_str[:500]}...")
             else:
                 logger.warning("Advertencia: El LLM no devolvió un resultado ('result' es None o vacío).")
                 resultado_analisis_llm_str = "El LLM no devolvió un resultado interpretable."
@@ -164,12 +163,11 @@ def run_analysis():
 
         logger.info("--- ETAPA 7: Formateando y Guardando Reporte JSON ---")
         start_time_report = time.time()
-        # Usar el output_dir_especifico_proyecto que ya calculamos
         ruta_json_guardado = report_utils.formatear_y_guardar_reporte(
             resultado_analisis_llm=resultado_analisis_llm_str,
             fuentes_recuperadas=fuentes_recuperadas_serializables,
             nombre_pdf_proyecto=nombre_pdf_proyecto_detectado, 
-            modelo_llm_usado=config.GEMINI_MODEL_NAME, # Usar GEMINI_MODEL_NAME
+            modelo_llm_usado=config.GEMINI_MODEL_NAME,
             output_path_dir=output_dir_especifico_proyecto
         )
         if not ruta_json_guardado:
@@ -182,9 +180,8 @@ def run_analysis():
             logger.info("--- ETAPA 8: Generando Dashboard de Visualización ---")
             start_time_dashboard = time.time()
             
-            base_name_json = os.path.splitext(os.path.basename(ruta_json_guardado))[0]
-            # Construir el nombre del dashboard consistentemente
-            dashboard_html_filename = base_name_json.replace("analisis_riesgos_", "dashboard_") + config.DASHBOARD_HTML_SUFFIX
+            # Usar el nombre base del PDF analizado para el dashboard
+            dashboard_html_filename = f"dashboard_{nombre_base_proyecto_analizado}.html"
             ruta_output_dashboard_html_absoluta = os.path.join(output_dir_especifico_proyecto, dashboard_html_filename)
 
             dashboard_generator.generar_dashboard_html(
@@ -230,6 +227,6 @@ if __name__ == '__main__':
         file_url_path = abs_dashboard_path.replace(os.sep, '/')
         if sys.platform == "win32" and file_url_path.startswith('/'):
              file_url_path = file_url_path[1:]
-        print(f"\nPara ver el dashboard, copia y pega esta URL en tu navegador:\nfile:///{file_url_path}")
+        print(f"\nPara ver el dashboard, copia y pega esta URL en tu navegador:\nfile:///{file_url_path.replace(' ', '%20')}") # Añadido replace para espacios
     else:
         logger.error("El proceso de análisis independiente falló o no generó el dashboard. Revisa los logs.")
