@@ -65,6 +65,5 @@ ENV PATH="/opt/venv/bin:$PATH"
 EXPOSE 8080
 
 # Comando para ejecutar la aplicación Flask usando Gunicorn.
-# "app:app" se refiere al archivo app.py y a la instancia de Flask llamada 'app' dentro de ese archivo.
-# Gunicorn escuchará en todas las interfaces (0.0.0.0) en el puerto especificado por $PORT.
-CMD ["gunicorn", "--bind", "0.0.0.0:$PORT", "app:app"]
+# Especificar el puerto 8080 directamente, ya que es el que Cloud Run espera por defecto.
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "1", "--threads", "8", "--timeout", "0", "app:app"]
