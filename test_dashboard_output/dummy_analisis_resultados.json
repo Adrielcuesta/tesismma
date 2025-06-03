@@ -1,0 +1,33 @@
+{
+    "nombre_proyecto_analizado": "Proyecto Final Emojis - Test v14",
+    "riesgos_identificados_estructurados": [
+        {
+            "descripcion_riesgo": "Riesgo Alto con Emoji OK",
+            "explicacion_riesgo_llm": "Explicación detallada.",
+            "impacto_estimado_llm": "Alto",
+            "probabilidad_estimada_llm": "Alta",
+            "estado_RAG_sugerido": "Rojo"
+        },
+        {
+            "descripcion_riesgo": "Riesgo Medio con Emoji OK",
+            "explicacion_riesgo_llm": "Explicación detallada.",
+            "impacto_estimado_llm": "Medio",
+            "probabilidad_estimada_llm": "Media",
+            "estado_RAG_sugerido": "Ámbar"
+        },
+        {
+            "descripcion_riesgo": "Riesgo Bajo con Emoji OK",
+            "explicacion_riesgo_llm": "Explicación detallada.",
+            "impacto_estimado_llm": "Bajo",
+            "probabilidad_estimada_llm": "Baja",
+            "estado_RAG_sugerido": "Verde"
+        },
+        {
+            "descripcion_riesgo": "Riesgo Indeterminado con Emoji OK",
+            "explicacion_riesgo_llm": "Explicación detallada.",
+            "impacto_estimado_llm": "Desconocido",
+            "probabilidad_estimada_llm": "Desconocida",
+            "estado_RAG_sugerido": "Gris (Indeterminado)"
+        }
+    ]
+}

@@ -60,12 +60,17 @@ MAX_CHARS_PROYECTO = 32000
 RECREAR_DB = True
 DASHBOARD_HTML_SUFFIX = "_dashboard.html"
 
+# En scripts/config.py
 INFO_TESIS = {
-    "titulo_tesis": "Sistema RAG para el Análisis de Riesgos en la Instalación de Maquinaria Industrial",
+    "titulo_tesis_h1": "TESIS FIN DE MAESTRÍA",
+    "titulo_tesis_h2": "Innovación en entornos empresariales",
+    "titulo_tesis_h3": "Sistemas RAG para la Optimización de la Gestión de Proyectos y Análisis Estratégico.",
+    "app_subtitle": "ANALIZADOR DE RIESGOS CON IA.", # Este es el que pusiste en app.py
+    "alumno": "Adriel J. Cuesta",
     "institucion_line1": "ITBA - Instituto Tecnológico Buenos Aires",
     "institucion_line2": "Maestría en Management & Analytics",
-    "alumno": "Adriel Cuesta",
-    "project_title": "Análisis de Riesgos en Instalación de Maquinaria Industrial"
+    "github_repo_url": "https://github.com/Adrielcuesta/tesismma"
+    # Añade cualquier otra clave que eventualmente quieras usar de forma centralizada.
 }
 
 _api_configured_flag = False

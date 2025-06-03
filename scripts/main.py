@@ -223,7 +223,8 @@ def run_analysis(force_recreate_db=None): # Aceptar el parámetro aquí
             dashboard_generator.generar_dashboard_html(
                 ruta_json_resultados=ruta_json_guardado,
                 ruta_output_dashboard_html=ruta_output_dashboard_html_absoluta,
-                lista_pdfs_base_conocimiento=lista_pdfs_base_conocimiento
+                lista_pdfs_base_conocimiento=lista_pdfs_base_conocimiento,
+                info_tesis_config=config.INFO_TESIS
             )
             
             if os.path.exists(ruta_output_dashboard_html_absoluta):
