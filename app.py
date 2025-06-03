@@ -103,9 +103,9 @@ HOME_PAGE_HTML = """
         
         .abstract-banner-container { 
             width: 100%; 
-            height: 251px; /* Altura de tu nueva imagen del banner */
-            margin: 0 auto 25px auto; 
-            background-image: url("{{ url_for('static', filename='images/header_banner_abstract.png') }}"); /* Asegúrate que este sea el nombre correcto de tu banner */
+            height: 120px; /* Altura reducida para el banner como "margen superior" */
+            margin-bottom: 25px; 
+            background-image: url("{{ url_for('static', filename='images/header_banner_abstract.png') }}");
             background-size: cover; 
             background-position: center;
             border-radius: 6px;
@@ -121,8 +121,8 @@ HOME_PAGE_HTML = """
             gap: 10px; 
             margin-bottom: 8px; 
         }
-        .title-with-logo img.logo-inline { /* Logo al lado de TESIS FIN DE MAESTRIA */
-            height: 30px; 
+        .title-with-logo img.logo-inline { 
+            height: 37px; /* Altura según tu ajuste */
             width: auto; 
         }
         .header-content h1 {
@@ -144,6 +144,15 @@ HOME_PAGE_HTML = """
             margin-bottom: 10px;
             font-weight: 400;
         }
+        /* Estilo para el nuevo título h4 */
+        .header-content h4.app-subtitle {
+            color: #555; /* Un gris un poco más oscuro */
+            font-size: 1.0em;
+            font-weight: bold;
+            font-style: italic;
+            margin-top: 2px;
+            margin-bottom: 15px;
+        }
         .header-content p.student-name {
             color: #333;
             font-size: 1.1em;
@@ -162,7 +171,7 @@ HOME_PAGE_HTML = """
             padding: 20px; 
             border: 1px solid #e0e0e0; 
             border-radius: 8px; 
-            background-color: #f8f9fa; /* Color más sutil para las secciones de carga */
+            background-color: #f8f9fa; 
         }
         .form-section h4 {
             margin-top: 0; 
@@ -177,21 +186,20 @@ HOME_PAGE_HTML = """
             font-size: 1.1em;
         }
         label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.95em; color: #343a40;}
-        input[type="file"], input[type="checkbox"] { margin-bottom: 10px; }
-        input[type="file"] { width: 100%; }
+        .checkbox-container div { margin-bottom: 10px; }
+        input[type="file"] { width: 100%; margin-top: 5px; margin-bottom:10px; } /* Ajuste margen para file input */
+        input[type="checkbox"] { vertical-align: middle; margin-bottom:0; margin-right:3px;}
         input[type="file"]:disabled { background-color: #e9ecef; cursor: not-allowed; } 
-        .checkbox-label { display: inline !important; font-weight: normal !important; font-size:0.9em !important; margin-left: 5px; color: #495057;}
+        .checkbox-label { display: inline !important; font-weight: normal !important; font-size:0.9em !important; vertical-align:middle; color: #495057;}
 
-        .button-container { text-align: center; margin-top: 10px; }
-        /* --- ESTILOS DEL BOTÓN RESTAURADOS --- */
+        .button-container { text-align: center; margin-top: 20px; }
         .button {
             display: inline-block; background-color: #007bff; color: white; padding: 14px 35px;
             border: none; border-radius: 5px; cursor: pointer; font-size: 1.1em;
             text-decoration: none; transition: background-color 0.3s ease; font-weight: 500;
         }
         .button:hover { background-color: #0056b3; }
-        .button-disabled { background-color: #cccccc; cursor: not-allowed; } /* Añadido de una versión anterior para consistencia */
-        /* --- FIN ESTILOS DEL BOTÓN --- */
+        .button-disabled { background-color: #cccccc; cursor: not-allowed; }
         
         .loader { border: 5px solid #f3f3f3; border-top: 5px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 30px auto 0 auto; display: none; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -202,10 +210,9 @@ HOME_PAGE_HTML = """
         .flash-messages .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
         .flash-messages .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
         
-        /* --- ESTILOS DEL FOOTER RESTAURADOS/VERIFICADOS --- */
         .footer { 
             width: 100%; 
-            text-align: center; /* CLAVE PARA CENTRAR EL CONTENIDO */
+            text-align: center; 
             padding: 25px 0; 
             font-size: 0.9em; 
             color: #6c757d; 
@@ -214,24 +221,21 @@ HOME_PAGE_HTML = """
         }
         .footer p { 
             margin: 5px 0; 
-            /* text-align: center; Ya heredado del padre .footer */
         }
-        .footer img.logo-itba-footer { /* El logo ITBA institucional del footer */
+        .footer img.logo-itba-footer { 
             max-height: 45px; 
             margin-bottom: 10px;
             opacity: 0.9;
-            /* Los <img> son inline por defecto, text-align:center del padre los centra */
         }
         .footer a { color: #007bff; text-decoration: none; }
         .footer a:hover { text-decoration: underline; }
-        /* --- FIN ESTILOS DEL FOOTER --- */
 
         @media (max-width: 768px) { 
             .upload-sections-container { flex-direction: column; }
             .main-container { padding: 20px; }
             .header-content h1 { font-size: 1.5em; }
-            .title-with-logo img.logo-inline { height: 25px; } 
-            .abstract-banner-container { height: 180px; } 
+            .title-with-logo img.logo-inline { height: 28px; } /* Ajustado para móvil */
+            .abstract-banner-container { height: 70px; } 
         }
     </style>
 </head>
@@ -246,7 +250,7 @@ HOME_PAGE_HTML = """
             </div>
             <h2>Innovación en entornos empresariales</h2>
             <h3>Sistemas RAG para la Optimización de la Gestión de Proyectos y Análisis Estratégico.</h3>
-            <p class="student-name">Alumno: Adriel J. Cuesta</p>
+            <h4 class="app-subtitle">ANALIZADOR DE RIESGOS CON IA.</h4> <p class="student-name">Alumno: Adriel J. Cuesta</p>
         </div>
         
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -263,17 +267,20 @@ HOME_PAGE_HTML = """
             <div class="upload-sections-container">
                 <div class="form-section">
                     <h4><span class="emoji">📚</span>Base de Conocimiento</h4>
-                    <div>
+                    <div class="checkbox-container"> 
                         <input type="checkbox" id="use_default_kb_input" name="use_default_kb" value="yes" checked>
-                        <label for="use_default_kb_input" class="checkbox-label">Usar Base de Conocimiento por defecto.</label>
+                        <label for="use_default_kb_input" class="checkbox-label">Usar Base de Conocimiento previamente cargada.</label>
                     </div>
-                    <label for="kb_files_input" style="margin-top:15px;">Subir PDFs para nueva Base de Conocimiento (hasta """+str(MAX_KB_FILES)+""" archivos, total max. """+str(MAX_KB_TOTAL_SIZE_MB // (1024*1024))+"""MB):</label>
+                    <label for="kb_files_input" style="margin-top:10px;">Subir PDFs para nueva Base de Conocimiento (hasta """+str(MAX_KB_FILES)+""" archivos, total max. """+str(MAX_KB_TOTAL_SIZE_MB // (1024*1024))+"""MB):</label>
                     <input type="file" id="kb_files_input" name="kb_files" multiple accept=".pdf">
                 </div>
 
                 <div class="form-section">
                     <h4><span class="emoji">📄</span>Proyecto a Analizar</h4>
-                    <label for="project_file_input">Subir PDF del Proyecto a Analizar (1 archivo, max. """+str(MAX_PROJECT_FILE_SIZE_MB // (1024*1024))+"""MB):</label>
+                    <div class="checkbox-container"> <input type="checkbox" id="use_existing_project_file_input" name="use_existing_project_file" value="yes" checked>
+                        <label for="use_existing_project_file_input" class="checkbox-label">Utilizar documento previamente cargado.</label>
+                    </div>
+                    <label for="project_file_input" style="margin-top:10px;">Subir PDF del Proyecto a Analizar (1 archivo, max. """+str(MAX_PROJECT_FILE_SIZE_MB // (1024*1024))+"""MB):</label>
                     <input type="file" id="project_file_input" name="project_file" accept=".pdf">
                 </div>
             </div>
@@ -295,6 +302,8 @@ HOME_PAGE_HTML = """
     <script>
         const useDefaultKbCheckbox = document.getElementById('use_default_kb_input');
         const kbFilesInput = document.getElementById('kb_files_input');
+        const useExistingProjectCheckbox = document.getElementById('use_existing_project_file_input');
+        const projectFileInput = document.getElementById('project_file_input');
 
         function toggleKbFileInput() {
             if (useDefaultKbCheckbox.checked) {
@@ -304,8 +313,21 @@ HOME_PAGE_HTML = """
                 kbFilesInput.disabled = false;
             }
         }
+
+        function toggleProjectFileInput() { 
+            if (useExistingProjectCheckbox.checked) {
+                projectFileInput.disabled = true;
+                projectFileInput.value = null;
+            } else {
+                projectFileInput.disabled = false;
+            }
+        }
+
         toggleKbFileInput(); 
         useDefaultKbCheckbox.addEventListener('change', toggleKbFileInput);
+        
+        toggleProjectFileInput(); 
+        useExistingProjectCheckbox.addEventListener('change', toggleProjectFileInput);
 
         document.getElementById('analysisForm').addEventListener('submit', function(event) {
             let valid = true;
@@ -327,8 +349,11 @@ HOME_PAGE_HTML = """
                     valid = false;
                 }
             }
-            const projectFileInput = document.getElementById('project_file_input');
-            if (projectFileInput.files.length > 0) {
+            
+            if (!useExistingProjectCheckbox.checked && projectFileInput.files.length === 0) {
+                alert('Por favor, suba un archivo PDF para el proyecto a analizar o marque la casilla para usar uno existente.');
+                valid = false;
+            } else if (!useExistingProjectCheckbox.checked && projectFileInput.files.length > 0) {
                 if (projectFileInput.files[0].size > """+str(MAX_PROJECT_FILE_SIZE_MB)+""") {
                     alert('El archivo del proyecto no debe exceder """+str(MAX_PROJECT_FILE_SIZE_MB // (1024*1024))+"""MB.');
                     valid = false;
@@ -338,6 +363,7 @@ HOME_PAGE_HTML = """
                     valid = false;
                 }
             }
+
             if (!valid) {
                 event.preventDefault();
                 return;
@@ -374,11 +400,10 @@ def analyze_route():
         flash("Error del servidor: La función de análisis o configuración no está cargada.", "error")
         return redirect(url_for('home'))
 
+    # --- Lógica para Base de Conocimiento (sin cambios respecto a la versión anterior) ---
     recreate_db_for_this_run = False 
     use_default_kb_checkbox = request.form.get('use_default_kb') == 'yes'
-    
     kb_files_uploaded = request.files.getlist('kb_files')
-    project_file_uploaded = request.files.get('project_file')
 
     if not use_default_kb_checkbox:
         actual_kb_files_to_save = [f for f in kb_files_uploaded if f and f.filename != '' and allowed_file(f.filename)]
@@ -387,7 +412,6 @@ def analyze_route():
             if len(actual_kb_files_to_save) > MAX_KB_FILES:
                 flash(f"Puede subir un máximo de {MAX_KB_FILES} archivos para la base de conocimiento.", "error")
                 return redirect(url_for('home'))
-            
             total_kb_size = sum(f.content_length for f in actual_kb_files_to_save)
             if total_kb_size > MAX_KB_TOTAL_SIZE_MB:
                 flash(f"El tamaño total de los archivos de la base de conocimiento no debe exceder {MAX_KB_TOTAL_SIZE_MB // (1024*1024)}MB.", "error")
@@ -400,48 +424,67 @@ def analyze_route():
             recreate_db_for_this_run = True
             flash(f"{len(actual_kb_files_to_save)} archivo(s) de base de conocimiento guardado(s). La base de datos se recreará.", "success")
         else: 
-            app.logger.info("No se subieron nuevos archivos de KB, y 'Usar por defecto' NO está marcado. Se intentará recrear la DB con el contenido actual de la carpeta BaseConocimiento.")
+            app.logger.info("No se subieron nuevos archivos de KB, y 'Usar por defecto' NO está marcado para KB. Se intentará recrear la DB con el contenido actual de la carpeta BaseConocimiento.")
             recreate_db_for_this_run = True 
     else: 
-        app.logger.info("'Usar por defecto' ESTÁ marcado. Se usará la DB existente. Los archivos de KB subidos (si los hay) serán ignorados.")
+        app.logger.info("'Usar por defecto' ESTÁ marcado para KB. Se usará la DB existente. Los archivos de KB subidos (si los hay) serán ignorados.")
         if any(f for f in kb_files_uploaded if f and f.filename != ''):
              flash("Se seleccionaron archivos para la base de conocimiento, pero como 'Usar por defecto' está marcado, estos archivos no se procesarán y se usará la base de datos existente.", "info")
         recreate_db_for_this_run = False
 
-    project_file_saved_for_analysis = False
-    if project_file_uploaded and project_file_uploaded.filename != '':
-        if allowed_file(project_file_uploaded.filename):
-            if project_file_uploaded.content_length > MAX_PROJECT_FILE_SIZE_MB:
-                flash(f"El archivo del proyecto no debe exceder {MAX_PROJECT_FILE_SIZE_MB // (1024*1024)}MB.", "error")
+    # --- Lógica Actualizada para Proyecto a Analizar ---
+    project_file_uploaded = request.files.get('project_file')
+    use_existing_project_file_checkbox = request.form.get('use_existing_project_file') == 'yes'
+    can_proceed_with_project_file = False
+
+    if use_existing_project_file_checkbox:
+        app.logger.info("'Utilizar documento previamente cargado' para Proyecto está marcado.")
+        if project_file_uploaded and project_file_uploaded.filename != '':
+            flash("Se seleccionó un archivo de proyecto, pero como 'Utilizar documento previamente cargado' está marcado, se ignorará y se usará el existente (si hay uno).", "info")
+        
+        try:
+            project_pdfs_in_dir = [f for f in os.listdir(config.DIRECTORIO_PROYECTO_ANALIZAR) if f.lower().endswith(".pdf")]
+            if not project_pdfs_in_dir:
+                flash("Seleccionó 'Utilizar documento previamente cargado', pero no se encontró ningún archivo de proyecto en el servidor. Por favor, suba uno o desmarque la casilla.", "error")
                 return redirect(url_for('home'))
-            
-            clear_directory(config.DIRECTORIO_PROYECTO_ANALIZAR)
-            filename = secure_filename(project_file_uploaded.filename)
-            project_file_path = os.path.join(config.DIRECTORIO_PROYECTO_ANALIZAR, filename)
-            project_file_uploaded.save(project_file_path)
-            app.logger.info(f"Archivo de proyecto '{filename}' guardado.")
-            flash(f"Archivo de proyecto '{filename}' guardado.", "success")
-            project_file_saved_for_analysis = True
-        else:
-            flash("Tipo de archivo no permitido para el proyecto. Solo PDF.", "error")
+            if len(project_pdfs_in_dir) > 1:
+                 flash(f"Hay múltiples archivos ({len(project_pdfs_in_dir)}) en el directorio del proyecto y seleccionó 'Utilizar existente'. Solo debe haber uno. Por favor, corrija.", "error")
+                 return redirect(url_for('home'))
+            app.logger.info(f"Se usará el archivo de proyecto existente: {project_pdfs_in_dir[0]}")
+            can_proceed_with_project_file = True
+        except FileNotFoundError:
+            flash("El directorio para el proyecto a analizar no existe. Error de configuración.", "error")
             return redirect(url_for('home'))
-    
-    try:
-        project_pdfs = [f for f in os.listdir(config.DIRECTORIO_PROYECTO_ANALIZAR) if f.lower().endswith(".pdf")]
-        if not project_pdfs:
-            flash("No se subió un archivo de proyecto y no se encontró ninguno en el servidor. Por favor, suba un PDF para analizar.", "error")
+        except Exception as e_check:
+            app.logger.error(f"Error al verificar archivo de proyecto existente: {e_check}")
+            flash("Error al verificar el archivo de proyecto en el servidor.", "error")
             return redirect(url_for('home'))
-        if len(project_pdfs) > 1 and not project_file_saved_for_analysis:
-             flash("Hay múltiples archivos de proyecto en el servidor y no se subió uno nuevo para especificar. Limpie el directorio 'ProyectoAnalizar'.", "error")
-             return redirect(url_for('home'))
-        app.logger.info(f"Se usará el archivo de proyecto: {project_pdfs[0]}")
-    except FileNotFoundError:
-        flash("Directorio de proyecto no encontrado. Error de configuración.", "error")
+    else: # Casilla "Utilizar existente" NO está marcada para Proyecto
+        app.logger.info("'Utilizar documento previamente cargado' para Proyecto NO está marcado. Se espera una nueva subida.")
+        if project_file_uploaded and project_file_uploaded.filename != '':
+            if allowed_file(project_file_uploaded.filename):
+                if project_file_uploaded.content_length > MAX_PROJECT_FILE_SIZE_MB:
+                    flash(f"El archivo del proyecto no debe exceder {MAX_PROJECT_FILE_SIZE_MB // (1024*1024)}MB.", "error")
+                    return redirect(url_for('home'))
+                
+                clear_directory(config.DIRECTORIO_PROYECTO_ANALIZAR)
+                filename = secure_filename(project_file_uploaded.filename)
+                project_file_uploaded.save(os.path.join(config.DIRECTORIO_PROYECTO_ANALIZAR, filename))
+                app.logger.info(f"Nuevo archivo de proyecto '{filename}' guardado.")
+                flash(f"Nuevo archivo de proyecto '{filename}' guardado.", "success")
+                can_proceed_with_project_file = True
+            else:
+                flash("Tipo de archivo no permitido para el proyecto. Solo PDF.", "error")
+                return redirect(url_for('home'))
+        else: 
+            flash("Por favor, suba un archivo PDF para el proyecto a analizar (la casilla 'utilizar existente' está desmarcada).", "error")
+            return redirect(url_for('home'))
+
+    if not can_proceed_with_project_file:
+        app.logger.error("No se pudo determinar un archivo de proyecto válido para el análisis.")
+        # El flash específico ya debería haberse mostrado arriba.
         return redirect(url_for('home'))
-    except Exception as e:
-        app.logger.error(f"Error al verificar archivo de proyecto: {e}")
-        flash("Error al verificar el archivo de proyecto en el servidor.", "error")
-        return redirect(url_for('home'))
+    # --- Fin Lógica Proyecto a Analizar ---
 
     try:
         app.logger.info(f"Llamando a scripts.main.run_analysis() con force_recreate_db={recreate_db_for_this_run}...")
