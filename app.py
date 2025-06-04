@@ -103,12 +103,13 @@ HOME_PAGE_HTML = """
         
         .abstract-banner-container { 
             width: 100%; 
-            height: 120px; /* Altura reducida para el banner como "margen superior" */
+            height: 100px; 
             margin-bottom: 25px; 
             background-image: url("{{ url_for('static', filename='images/header_banner_abstract.png') }}");
             background-size: cover; 
             background-position: center;
             border-radius: 6px;
+            background-color: #f0f0f0; /* Fallback color */
         }
         .header-content {
             text-align: center;
@@ -122,7 +123,7 @@ HOME_PAGE_HTML = """
             margin-bottom: 8px; 
         }
         .title-with-logo img.logo-inline { 
-            height: 37px; /* Altura según tu ajuste */
+            height: 37px; 
             width: auto; 
         }
         .header-content h1 {
@@ -144,9 +145,8 @@ HOME_PAGE_HTML = """
             margin-bottom: 10px;
             font-weight: 400;
         }
-        /* Estilo para el nuevo título h4 */
         .header-content h4.app-subtitle {
-            color: #555; /* Un gris un poco más oscuro */
+            color: #555; 
             font-size: 1.0em;
             font-weight: bold;
             font-style: italic;
@@ -186,8 +186,8 @@ HOME_PAGE_HTML = """
             font-size: 1.1em;
         }
         label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.95em; color: #343a40;}
-        .checkbox-container div { margin-bottom: 10px; }
-        input[type="file"] { width: 100%; margin-top: 5px; margin-bottom:10px; } /* Ajuste margen para file input */
+        .checkbox-container div { margin-bottom: 10px; } 
+        input[type="file"] { width: 100%; margin-top: 5px; margin-bottom:10px; } 
         input[type="checkbox"] { vertical-align: middle; margin-bottom:0; margin-right:3px;}
         input[type="file"]:disabled { background-color: #e9ecef; cursor: not-allowed; } 
         .checkbox-label { display: inline !important; font-weight: normal !important; font-size:0.9em !important; vertical-align:middle; color: #495057;}
@@ -234,14 +234,13 @@ HOME_PAGE_HTML = """
             .upload-sections-container { flex-direction: column; }
             .main-container { padding: 20px; }
             .header-content h1 { font-size: 1.5em; }
-            .title-with-logo img.logo-inline { height: 28px; } /* Ajustado para móvil */
-            .abstract-banner-container { height: 70px; } 
+            .title-with-logo img.logo-inline { height: 28px; } 
+            .abstract-banner-container { height: 180px; } 
         }
     </style>
 </head>
 <body>
-    <div class="main-container">
-        <div class="abstract-banner-container"></div> 
+    <div class="main-container"> <div class="abstract-banner-container"></div> 
 
         <div class="header-content">
             <div class="title-with-logo">
@@ -250,7 +249,8 @@ HOME_PAGE_HTML = """
             </div>
             <h2>Innovación en entornos empresariales</h2>
             <h3>Sistemas RAG para la Optimización de la Gestión de Proyectos y Análisis Estratégico.</h3>
-            <h4 class="app-subtitle">ANALIZADOR DE RIESGOS CON IA.</h4> <p class="student-name">Alumno: Adriel J. Cuesta</p>
+            <h4 class="app-subtitle">ANALIZADOR DE RIESGOS CON IA.</h4>
+            <p class="student-name">Alumno: Adriel J. Cuesta</p>
         </div>
         
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -269,7 +269,7 @@ HOME_PAGE_HTML = """
                     <h4><span class="emoji">📚</span>Base de Conocimiento</h4>
                     <div class="checkbox-container"> 
                         <input type="checkbox" id="use_default_kb_input" name="use_default_kb" value="yes" checked>
-                        <label for="use_default_kb_input" class="checkbox-label">Usar Base de Conocimiento previamente cargada.</label>
+                        <label for="use_default_kb_input" class="checkbox-label">Usar Base de Conocimiento por defecto.</label>
                     </div>
                     <label for="kb_files_input" style="margin-top:10px;">Subir PDFs para nueva Base de Conocimiento (hasta """+str(MAX_KB_FILES)+""" archivos, total max. """+str(MAX_KB_TOTAL_SIZE_MB // (1024*1024))+"""MB):</label>
                     <input type="file" id="kb_files_input" name="kb_files" multiple accept=".pdf">
@@ -277,7 +277,8 @@ HOME_PAGE_HTML = """
 
                 <div class="form-section">
                     <h4><span class="emoji">📄</span>Proyecto a Analizar</h4>
-                    <div class="checkbox-container"> <input type="checkbox" id="use_existing_project_file_input" name="use_existing_project_file" value="yes" checked>
+                    <div class="checkbox-container"> 
+                        <input type="checkbox" id="use_existing_project_file_input" name="use_existing_project_file" value="yes" checked>
                         <label for="use_existing_project_file_input" class="checkbox-label">Utilizar documento previamente cargado.</label>
                     </div>
                     <label for="project_file_input" style="margin-top:10px;">Subir PDF del Proyecto a Analizar (1 archivo, max. """+str(MAX_PROJECT_FILE_SIZE_MB // (1024*1024))+"""MB):</label>
@@ -285,15 +286,17 @@ HOME_PAGE_HTML = """
                 </div>
             </div>
             
+            <div class="checkbox-container" style="text-align: center; margin-bottom: 20px; margin-top: 15px;">
+                <input type="checkbox" id="generate_pdf_input" name="generate_pdf" value="yes">
+                <label for="generate_pdf_input" class="checkbox-label" style="font-size: 0.95em;">Generar también reporte en PDF</label>
+            </div>
+            
             <div class="button-container">
                 <button type="submit" id="analyzeButton" class="button">Iniciar Análisis</button>
             </div>
         </form>
         <div id="loader" class="loader"></div>
-    </div>
-
-    <div class="footer">
-        <img src="{{ url_for('static', filename='images/itba.png') }}" alt="Logo ITBA" class="logo-itba-footer">
+    </div> <div class="footer"> <img src="{{ url_for('static', filename='images/itba.png') }}" alt="Logo ITBA" class="logo-itba-footer">
         <p>{{ footer_info.institucion_line1 }} - {{ footer_info.institucion_line2 }}</p>
         <p><a href="{{ footer_info.github_repo_url }}" target="_blank">Ver Repositorio en GitHub</a></p>
         <p>&copy; {{ CURRENT_YEAR }} Adriel J. Cuesta. Todos los derechos reservados.</p>
@@ -302,8 +305,8 @@ HOME_PAGE_HTML = """
     <script>
         const useDefaultKbCheckbox = document.getElementById('use_default_kb_input');
         const kbFilesInput = document.getElementById('kb_files_input');
-        const useExistingProjectCheckbox = document.getElementById('use_existing_project_file_input');
-        const projectFileInput = document.getElementById('project_file_input');
+        const useExistingProjectCheckbox = document.getElementById('use_existing_project_file_input'); 
+        const projectFileInput = document.getElementById('project_file_input'); 
 
         function toggleKbFileInput() {
             if (useDefaultKbCheckbox.checked) {
@@ -400,7 +403,7 @@ def analyze_route():
         flash("Error del servidor: La función de análisis o configuración no está cargada.", "error")
         return redirect(url_for('home'))
 
-    # --- Lógica para Base de Conocimiento (sin cambios respecto a la versión anterior) ---
+    # --- Lógica para Base de Conocimiento ---
     recreate_db_for_this_run = False 
     use_default_kb_checkbox = request.form.get('use_default_kb') == 'yes'
     kb_files_uploaded = request.files.getlist('kb_files')
@@ -435,7 +438,7 @@ def analyze_route():
     # --- Lógica Actualizada para Proyecto a Analizar ---
     project_file_uploaded = request.files.get('project_file')
     use_existing_project_file_checkbox = request.form.get('use_existing_project_file') == 'yes'
-    can_proceed_with_project_file = False
+    can_proceed_with_project_file = False # Flag para saber si tenemos un archivo de proyecto válido
 
     if use_existing_project_file_checkbox:
         app.logger.info("'Utilizar documento previamente cargado' para Proyecto está marcado.")
@@ -452,11 +455,12 @@ def analyze_route():
                  return redirect(url_for('home'))
             app.logger.info(f"Se usará el archivo de proyecto existente: {project_pdfs_in_dir[0]}")
             can_proceed_with_project_file = True
-        except FileNotFoundError:
+        except FileNotFoundError: # Esto no debería pasar si config.inicializar_directorios_datos() funcionó
+            app.logger.error(f"Directorio de proyecto no encontrado: {config.DIRECTORIO_PROYECTO_ANALIZAR}")
             flash("El directorio para el proyecto a analizar no existe. Error de configuración.", "error")
             return redirect(url_for('home'))
-        except Exception as e_check:
-            app.logger.error(f"Error al verificar archivo de proyecto existente: {e_check}")
+        except Exception as e_check: # Captura genérica para otros errores de OS al listar
+            app.logger.error(f"Error al verificar archivo de proyecto existente en '{config.DIRECTORIO_PROYECTO_ANALIZAR}': {e_check}")
             flash("Error al verificar el archivo de proyecto en el servidor.", "error")
             return redirect(url_for('home'))
     else: # Casilla "Utilizar existente" NO está marcada para Proyecto
@@ -477,34 +481,59 @@ def analyze_route():
                 flash("Tipo de archivo no permitido para el proyecto. Solo PDF.", "error")
                 return redirect(url_for('home'))
         else: 
-            flash("Por favor, suba un archivo PDF para el proyecto a analizar (la casilla 'utilizar existente' está desmarcada).", "error")
+            flash("No se subió un archivo para el proyecto a analizar. Por favor, suba un PDF o marque la casilla para usar uno existente.", "error")
             return redirect(url_for('home'))
 
     if not can_proceed_with_project_file:
-        app.logger.error("No se pudo determinar un archivo de proyecto válido para el análisis.")
-        # El flash específico ya debería haberse mostrado arriba.
+        app.logger.error("Fallo en la lógica de determinar el archivo de proyecto. Redirigiendo a home.")
+        # El mensaje flash específico ya se debería haber establecido arriba.
         return redirect(url_for('home'))
     # --- Fin Lógica Proyecto a Analizar ---
 
-    try:
+    # --- Inicio del bloque try para el análisis y generación de PDF ---
+    try: # CORRECCIÓN DE INDENTACIÓN: Este try debe englobar la lógica de análisis
         app.logger.info(f"Llamando a scripts.main.run_analysis() con force_recreate_db={recreate_db_for_this_run}...")
         dashboard_relative_path = run_analysis(force_recreate_db=recreate_db_for_this_run)
-        app.logger.info(f"run_analysis() completado. Ruta dashboard: {dashboard_relative_path}")
+        app.logger.info(f"run_analysis() completado. Ruta dashboard HTML: {dashboard_relative_path}")
 
         if dashboard_relative_path:
             dashboard_absolute_path = os.path.join(PROJECT_ROOT, dashboard_relative_path)
             if os.path.exists(dashboard_absolute_path):
+                
+                generate_pdf_requested = request.form.get('generate_pdf') == 'yes'
+                if generate_pdf_requested:
+                    app.logger.info("Solicitud para generar PDF recibida.")
+                    try:
+                        from scripts.pdf_utils import generate_pdf_from_html_file 
+                        
+                        pdf_filename = os.path.basename(dashboard_absolute_path).replace('.html', '.pdf')
+                        pdf_absolute_path = os.path.join(os.path.dirname(dashboard_absolute_path), pdf_filename)
+                        
+                        if generate_pdf_from_html_file(dashboard_absolute_path, pdf_absolute_path):
+                            pdf_relative_path = os.path.join(os.path.dirname(dashboard_relative_path), pdf_filename)
+                            flash(f"Reporte PDF también generado: {pdf_relative_path}", "success")
+                        else:
+                            flash("Se solicitó PDF, pero ocurrió un error durante su generación. Revise los logs del servidor.", "error")
+                    except ImportError:
+                        app.logger.error("No se pudo importar WeasyPrint desde scripts.pdf_utils. ¿Está instalado WeasyPrint y el archivo pdf_utils.py existe?")
+                        flash("Error: No se pudo generar el PDF. Falta la biblioteca WeasyPrint o sus dependencias, o el módulo pdf_utils.", "error")
+                    except Exception as e_pdf:
+                        app.logger.error(f"Error en el proceso de generación de PDF: {e_pdf}")
+                        app.logger.error(traceback.format_exc())
+                        flash("Error al intentar generar el reporte PDF.", "error")
+                
                 return send_file(dashboard_absolute_path)
             else:
-                app.logger.error(f"Dashboard no encontrado en ruta absoluta: '{dashboard_absolute_path}'.")
-                flash(f"Error: Análisis completado, pero no se encontró el dashboard.", "error")
+                app.logger.error(f"Dashboard HTML no encontrado en ruta absoluta: '{dashboard_absolute_path}'.")
+                flash(f"Error: Análisis completado, pero no se encontró el dashboard HTML.", "error")
         else:
-            flash("El proceso de análisis no generó un dashboard o falló. Revisa los logs del servidor para más detalles.", "info")
+            flash("El proceso de análisis no generó un dashboard HTML. Revisa los logs del servidor para más detalles.", "info")
     
-    except Exception as e:
-        app.logger.error(f"Excepción inesperada en la ruta /analyze: {e}")
+    except Exception as e: # CORRECCIÓN DE INDENTACIÓN: Este except debe estar alineado con su try
+        app.logger.error(f"Excepción inesperada en la ruta /analyze durante el análisis o generación de PDF: {e}")
         app.logger.error(traceback.format_exc())
         flash(f"Ocurrió un error interno inesperado en el servidor: {str(e)}", "error")
+    # --- Fin del bloque try ---
     
     return redirect(url_for('home'))
 

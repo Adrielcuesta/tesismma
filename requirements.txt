@@ -8,6 +8,7 @@ pymupdf
 python-dotenv
 certifi
 numpy
+WeasyPrint
 #numpy==1.26.4 # O "
 #numpy<2 #" - Fijar a 1.26.4 para estabilidad con onnxruntime
 onnxruntime # Necesario por ChromaDB y/o sentence-transformers
