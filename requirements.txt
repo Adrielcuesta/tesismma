@@ -1,24 +1,35 @@
-google-generativeai
-langchain
-langchain-community
-langchain-google-genai
-sentence-transformers
-chromadb # Pip instalará la última versión compatible
-pymupdf
-python-dotenv
-certifi
-numpy
-WeasyPrint
-#numpy==1.26.4 # O "
-#numpy<2 #" - Fijar a 1.26.4 para estabilidad con onnxruntime
-onnxruntime # Necesario por ChromaDB y/o sentence-transformers
+# requirements.txt
+
+# --- Core Frameworks ---
 Flask>=2.0
 gunicorn>=20.0
+python-dotenv
 
-# Opcional: Si quieres fijar versiones específicas para mayor reproducibilidad:
-# langchain==0.1.20
-# langchain-community==0.0.38
-# langchain-google-genai==0.0.9 
-# sentence-transformers==2.7.0 # O la versión que tengas y funcione
-# chromadb==0.4.24 # Si la v1.x sigue dando problemas, esta es más antigua pero estable
-# pydantic~=1.10.15 # Necesario si usas chromadb 0.4.x
+# --- LangChain y Ecosistema de IA ---
+langchain
+langchain-community
+langchain-core
+langchain-google-genai
+langchain-openai
+langchain-huggingface
+google-generativeai
+pydantic>=2.0,<3.0
+
+# --- Vector DB y Embeddings ---
+chromadb
+sentence-transformers
+onnxruntime
+
+# --- Procesamiento de Documentos ---
+pymupdf
+weasyprint
+
+# --- NUEVO: Framework de Evaluación RAG ---
+ragas
+datasets
+
+# --- Utilidades ---
+certifi
+numpy==1.26.4
+pandas
+#numpy<2
