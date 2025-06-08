@@ -22,7 +22,7 @@ onnxruntime
 
 # --- Procesamiento de Documentos ---
 pymupdf
-weasyprint
+
 
 # --- NUEVO: Framework de Evaluación RAG ---
 ragas

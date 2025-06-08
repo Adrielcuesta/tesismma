@@ -4,7 +4,7 @@ import sys
 import logging
 import traceback
 import datetime
-from flask import Flask, render_template_string, send_file, url_for, redirect, flash, request, make_response
+from flask import Flask, render_template_string, send_file, url_for, redirect, flash, request
 from werkzeug.utils import secure_filename
 from pydantic import ValidationError
 
@@ -16,23 +16,45 @@ if PROJECT_ROOT not in sys.path:
 try:
     from scripts.main import run_analysis
     from scripts import config
-    from scripts.pdf_utils import generate_pdf_from_html_file
+    from scripts.descargar_modelo import descargar_modelo
 except ImportError as e:
     logging.basicConfig(level=logging.ERROR)
     logging.error(f"Error crítico al importar módulos necesarios: {e}")
-    run_analysis, config, generate_pdf_from_html_file = None, None, None
+    run_analysis, config, descargar_modelo = None, None, None
 
 # --- Creación y Configuración de la App Flask ---
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', os.urandom(24))
 
-# ... (Configuración de logging y constantes se mantienen igual) ...
+if descargar_modelo and config:
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(name)s - %(message)s')
+    logger_startup = logging.getLogger(__name__)
+
+    logger_startup.info("--- Verificando existencia de modelo de embeddings local ---")
+    if not os.path.exists(config.LOCAL_EMBEDDING_MODEL_PATH):
+        logger_startup.warning(f"Modelo no encontrado en '{config.LOCAL_EMBEDDING_MODEL_PATH}'.")
+        logger_startup.info("Iniciando descarga automática del modelo. Esto puede tardar unos minutos...")
+        try:
+            descargar_modelo()
+            logger_startup.info("✅ Descarga del modelo completada exitosamente.")
+        except Exception as e:
+            logger_startup.error(f"❌ FALLO CRÍTICO: No se pudo descargar el modelo de embedding. La aplicación no podrá funcionar. Error: {e}")
+    else:
+        logger_startup.info(f"✅ Modelo ya existe en '{config.LOCAL_EMBEDDING_MODEL_PATH}'. No se necesita descarga.")
+
 ALLOWED_EXTENSIONS = {'pdf'}
 MAX_KB_FILES = 4
 MAX_KB_TOTAL_SIZE_MB = 8 * 1024 * 1024
 MAX_PROJECT_FILE_SIZE_MB = 2 * 1024 * 1024
 FOOTER_INFO = getattr(config, 'INFO_TESIS', {})
 CURRENT_YEAR = datetime.datetime.now().year
+
+if not app.debug:
+    gunicorn_logger = logging.getLogger('gunicorn.error')
+    app.logger.handlers.extend(gunicorn_logger.handlers)
+    app.logger.setLevel(logging.INFO)
+else:
+    app.logger.setLevel(logging.INFO)
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -47,8 +69,6 @@ def clear_directory(directory_path):
         except Exception as e:
             app.logger.error(f'Error al eliminar {file_path}. Razón: {e}')
 
-# El HTML de la página principal (HOME_PAGE_HTML) se mantiene sin cambios desde el Paso 2
-# Se omite aquí por brevedad, pero debe permanecer en tu archivo.
 HOME_PAGE_HTML = """
 <!DOCTYPE html>
 <html lang="es">
@@ -75,11 +95,11 @@ HOME_PAGE_HTML = """
         .form-section h4 .emoji { margin-right: 8px; font-size: 1.1em; }
         label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.95em; color: #343a40;}
         .checkbox-container div { margin-bottom: 10px; }
-        input[type="file"], select { width: 100%; margin-top: 5px; margin-bottom:10px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        input[type="file"], select { width: 100%; box-sizing: border-box; margin-top: 5px; margin-bottom:10px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
         input[type="checkbox"] { vertical-align: middle; margin-bottom:0; margin-right:3px;}
         input[type="file"]:disabled { background-color: #e9ecef; cursor: not-allowed; }
         .checkbox-label { display: inline !important; font-weight: normal !important; font-size:0.9em !important; vertical-align:middle; color: #495057;}
-        .button-container { text-align: center; margin-top: 20px; }
+        .button-container { text-align: center; margin-top: 30px; }
         .button { display: inline-block; background-color: #007bff; color: white; padding: 14px 35px; border: none; border-radius: 5px; cursor: pointer; font-size: 1.1em; text-decoration: none; transition: background-color 0.3s ease; font-weight: 500; }
         .button:hover { background-color: #0056b3; }
         .button-disabled { background-color: #cccccc; cursor: not-allowed; }
@@ -99,7 +119,8 @@ HOME_PAGE_HTML = """
     </style>
 </head>
 <body>
-    <div class="main-container"> <div class="abstract-banner-container"></div>
+    <div class="main-container">
+        <div class="abstract-banner-container"></div>
         <div class="header-content">
             <div class="title-with-logo">
                 <img src="{{ url_for('static', filename='images/logo-itba.png') }}" alt="Logo RAG" class="logo-inline">
@@ -138,7 +159,7 @@ HOME_PAGE_HTML = """
                         <input type="checkbox" id="use_default_kb_input" name="use_default_kb" value="yes" checked>
                         <label for="use_default_kb_input" class="checkbox-label">Usar Base de Conocimiento por defecto.</label>
                     </div>
-                    <label for="kb_files_input" style="margin-top:10px;">Subir PDFs para nueva Base de Conocimiento (hasta """+str(MAX_KB_FILES)+""" archivos, total max. """+str(MAX_KB_TOTAL_SIZE_MB // (1024*1024))+"""MB):</label>
+                    <label for="kb_files_input" style="margin-top:10px;">Subir PDFs para nueva Base de Conocimiento:</label>
                     <input type="file" id="kb_files_input" name="kb_files" multiple accept=".pdf">
                 </div>
                 <div class="form-section">
@@ -147,13 +168,9 @@ HOME_PAGE_HTML = """
                         <input type="checkbox" id="use_existing_project_file_input" name="use_existing_project_file" value="yes" checked>
                         <label for="use_existing_project_file_input" class="checkbox-label">Utilizar documento previamente cargado.</label>
                     </div>
-                    <label for="project_file_input" style="margin-top:10px;">Subir PDF del Proyecto a Analizar (1 archivo, max. """+str(MAX_PROJECT_FILE_SIZE_MB // (1024*1024))+"""MB):</label>
+                    <label for="project_file_input" style="margin-top:10px;">Subir PDF del Proyecto a Analizar:</label>
                     <input type="file" id="project_file_input" name="project_file" accept=".pdf">
                 </div>
-            </div>
-            <div class="checkbox-container" style="text-align: center; margin-bottom: 20px; margin-top: 15px;">
-                <input type="checkbox" id="generate_pdf_input" name="generate_pdf" value="yes">
-                <label for="generate_pdf_input" class="checkbox-label" style="font-size: 0.95em;">Generar también reporte en PDF</label>
             </div>
             <div class="button-container">
                 <button type="submit" id="analyzeButton" class="button">Iniciar Análisis</button>
@@ -179,8 +196,6 @@ HOME_PAGE_HTML = """
         toggleProjectFileInput();
         useExistingProjectCheckbox.addEventListener('change', toggleProjectFileInput);
         document.getElementById('analysisForm').addEventListener('submit', function(event) {
-            let valid = true; /* La lógica de validación JS se mantiene igual y se omite por brevedad */
-            if (!valid) { event.preventDefault(); return; }
             document.getElementById('loader').style.display = 'block';
             const analyzeBtn = document.getElementById('analyzeButton');
             analyzeBtn.disabled = true;
@@ -199,34 +214,51 @@ def home():
         flash("Error crítico: La aplicación no está configurada correctamente. Revise los logs del servidor.", "error")
 
     llm_models_for_template = getattr(config, 'LLM_MODELS', {})
-
-    return render_template_string(HOME_PAGE_HTML,
-                                  footer_info=FOOTER_INFO,
-                                  llm_models=llm_models_for_template,
-                                  MAX_KB_FILES=MAX_KB_FILES,
-                                  MAX_KB_TOTAL_SIZE_MB=MAX_KB_TOTAL_SIZE_MB,
-                                  MAX_PROJECT_FILE_SIZE_MB=MAX_PROJECT_FILE_SIZE_MB,
-                                  CURRENT_YEAR=CURRENT_YEAR)
+    return render_template_string(HOME_PAGE_HTML, footer_info=FOOTER_INFO, llm_models=llm_models_for_template, CURRENT_YEAR=CURRENT_YEAR)
 
 @app.route('/analyze', methods=['POST'])
 def analyze_route():
     app.logger.info("Solicitud POST a /analyze recibida.")
 
-    # --- Lógica de validación de entradas y archivos (sin cambios significativos) ---
-    # ... (código omitido por brevedad, se mantiene igual que en Paso 2) ...
+    if run_analysis is None or config is None:
+        flash("Error del servidor: La función de análisis o configuración no está cargada.", "error")
+        return redirect(url_for('home'))
+
     selected_llm_model_id = request.form.get('llm_model')
-    recreate_db_for_this_run = request.form.get('use_default_kb') != 'yes'
-    generate_pdf_requested = request.form.get('generate_pdf') == 'yes'
+    use_default_kb_checkbox = request.form.get('use_default_kb') == 'yes'
+    use_existing_project_file_checkbox = request.form.get('use_existing_project_file') == 'yes'
+    kb_files_uploaded = request.files.getlist('kb_files')
+    project_file_uploaded = request.files.get('project_file')
 
-    # --- Inicio del bloque de análisis ---
+    recreate_db_for_this_run = not use_default_kb_checkbox
+
+    if not use_default_kb_checkbox:
+        actual_kb_files_to_save = [f for f in kb_files_uploaded if f and f.filename != '' and allowed_file(f.filename)]
+        if actual_kb_files_to_save:
+            clear_directory(config.DIRECTORIO_BASE_CONOCIMIENTO)
+            for file in actual_kb_files_to_save:
+                filename = secure_filename(file.filename)
+                file.save(os.path.join(config.DIRECTORIO_BASE_CONOCIMIENTO, filename))
+            flash(f"{len(actual_kb_files_to_save)} archivo(s) guardados para la Base de Conocimiento.", "success")
+        else:
+             flash("Se usará el contenido actual de la carpeta BaseConocimiento.", "info")
+
+    if not use_existing_project_file_checkbox:
+        if project_file_uploaded and project_file_uploaded.filename != '' and allowed_file(project_file_uploaded.filename):
+            clear_directory(config.DIRECTORIO_PROYECTO_ANALIZAR)
+            filename = secure_filename(project_file_uploaded.filename)
+            project_file_uploaded.save(os.path.join(config.DIRECTORIO_PROYECTO_ANALIZAR, filename))
+            flash(f"Archivo de proyecto '{filename}' guardado.", "success")
+        else:
+            flash("Debe subir un archivo de proyecto si no utiliza el existente.", "error")
+            return redirect(url_for('home'))
+
     try:
-        app.logger.info(f"Llamando a run_analysis() con modelo='{selected_llm_model_id}' y PDF_flag={generate_pdf_requested}")
+        app.logger.info(f"Llamando a run_analysis() con modelo='{selected_llm_model_id}'")
 
-        # ACTUALIZADO: Pasamos el flag para generar PDF
         dashboard_relative_path = run_analysis(
             selected_llm_model_id=selected_llm_model_id,
-            force_recreate_db=recreate_db_for_this_run,
-            generate_pdf_flag=generate_pdf_requested
+            force_recreate_db=recreate_db_for_this_run
         )
 
         if not dashboard_relative_path:
@@ -239,16 +271,6 @@ def analyze_route():
             flash("Error: Análisis completado, pero no se encontró el dashboard HTML.", "error")
             return redirect(url_for('home'))
 
-        # Si se solicitó un PDF, ya fue creado por el flujo principal (gracias al flag).
-        # El HTML ya contiene el enlace de descarga.
-        if generate_pdf_requested:
-            pdf_path = dashboard_absolute_path.replace('.html', '.pdf')
-            if os.path.exists(pdf_path):
-                flash("Reporte PDF generado exitosamente. Puede descargarlo desde el dashboard.", "success")
-            else:
-                flash("Se solicitó PDF, pero ocurrió un error durante su generación.", "error")
-
-        # Enviamos el dashboard HTML al usuario
         return send_file(dashboard_absolute_path)
 
     except (ValidationError, TypeError) as e_val:
@@ -263,4 +285,5 @@ def analyze_route():
 if __name__ == '__main__':
     app.logger.info("Iniciando servidor Flask de desarrollo...")
     port = int(os.environ.get("PORT", 8080))
-    app.run(debug=True, host='0.0.0.0', port=port)
+    # --- CAMBIO REALIZADO: Añadido use_reloader=False ---
+    app.run(debug=True, host='0.0.0.0', port=port, use_reloader=False)
