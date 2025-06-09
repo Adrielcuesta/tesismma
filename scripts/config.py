@@ -26,7 +26,7 @@ DATA_DIR = os.path.join(PROJECT_ROOT, "datos")
 DIRECTORIO_BASE_CONOCIMIENTO = os.path.join(DATA_DIR, "BaseConocimiento")
 DIRECTORIO_PROYECTO_ANALIZAR = os.path.join(DATA_DIR, "ProyectoAnalizar")
 CHROMA_DB_PATH = os.path.join(DATA_DIR, "ChromaDB_V1")
-DIRECTORIO_RESULTADOS = os.path.join(DATA_DIR, "Resultados")
+DIRECTORIO_RESULTADOS_BASE = os.path.join(DATA_DIR, "Resultados") # Renombrado
 MODELOS_LOCALES_PATH = os.path.join(PROJECT_ROOT, "modelos_locales")
 CACHE_DIR_HF = os.path.join(PROJECT_ROOT, ".cache", "huggingface_cache")
 
@@ -44,8 +44,7 @@ else:
 CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 150
 MAX_CHARS_PROYECTO = 12000
-# --- ¡IMPORTANTE! Forzamos la recreación para que se aplique el filtro de páginas ---
-RECREAR_DB = True 
+RECREAR_DB = False # Ajustado para que la UI controle la recreación de la DB
 MAX_PAGES_TO_CHECK_FOR_INDEX = 5
 
 # --- Configuración para el Re-ranker ---
@@ -81,6 +80,17 @@ LLM_MODELS = {
         "display_name": "Qwen Plus (Alibaba)",
         "api_key_env": "QWEN_API_KEY",
         "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1"
+    },
+    # Nuevos modelos
+    "mistral-large-latest": { # 
+        "provider": "mistralai",
+        "display_name": "Mistral Large (Recomendado)",
+        "api_key_env": "MISTRAL_API_KEY"
+    },
+    "command-r-plus": { # 
+        "provider": "cohere",
+        "display_name": "Cohere Command R+",
+        "api_key_env": "COHERE_API_KEY"
     }
 }
 
@@ -119,7 +129,7 @@ def configure_google_api():
 def inicializar_directorios_datos():
     directorios_a_crear = [
         DIRECTORIO_BASE_CONOCIMIENTO, DIRECTORIO_PROYECTO_ANALIZAR,
-        CHROMA_DB_PATH, DIRECTORIO_RESULTADOS, MODELOS_LOCALES_PATH, CACHE_DIR_HF
+        CHROMA_DB_PATH, DIRECTORIO_RESULTADOS_BASE, MODELOS_LOCALES_PATH, CACHE_DIR_HF
     ]
     try:
         for dir_path in directorios_a_crear:

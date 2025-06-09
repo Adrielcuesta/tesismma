@@ -43,9 +43,12 @@ if descargar_modelo and config:
         logger_startup.info(f"✅ Modelo ya existe en '{config.LOCAL_EMBEDDING_MODEL_PATH}'. No se necesita descarga.")
 
 ALLOWED_EXTENSIONS = {'pdf'}
-MAX_KB_FILES = 4
-MAX_KB_TOTAL_SIZE_MB = 8 * 1024 * 1024
-MAX_PROJECT_FILE_SIZE_MB = 2 * 1024 * 1024
+
+# --- LÍMITES DE TAMAÑO DE ARCHIVOS ---
+MAX_KB_FILES = 4 * 1024 * 1024 # 4 MB por archivo de KB
+MAX_TOTAL_KB_UPLOAD_MB = 8 * 1024 * 1024 # 8 MB total para KB
+MAX_PROJECT_FILE_SIZE_MB = 2 * 1024 * 1024 # 2 MB para el archivo de proyecto
+
 FOOTER_INFO = getattr(config, 'INFO_TESIS', {})
 CURRENT_YEAR = datetime.datetime.now().year
 
@@ -232,8 +235,25 @@ def analyze_route():
 
     recreate_db_for_this_run = not use_default_kb_checkbox
 
+    # --- Validación de tamaño para archivos de la Base de Conocimiento ---
     if not use_default_kb_checkbox:
-        actual_kb_files_to_save = [f for f in kb_files_uploaded if f and f.filename != '' and allowed_file(f.filename)]
+        total_kb_size = 0
+        actual_kb_files_to_save = []
+        for file in kb_files_uploaded:
+            if file and file.filename != '' and allowed_file(file.filename):
+                file.seek(0, os.SEEK_END) # Mover el puntero al final
+                file_size = file.tell()   # Obtener el tamaño en bytes
+                file.seek(0)              # Volver al inicio para lectura
+                if file_size > MAX_KB_FILES:
+                    flash(f"El archivo '{file.filename}' excede el límite de tamaño ({MAX_KB_FILES / (1024 * 1024):.0f} MB).", "error")
+                    return redirect(url_for('home'))
+                total_kb_size += file_size
+                actual_kb_files_to_save.append(file)
+        
+        if total_kb_size > MAX_TOTAL_KB_UPLOAD_MB:
+            flash(f"El tamaño total de los archivos de la Base de Conocimiento excede el límite ({MAX_TOTAL_KB_UPLOAD_MB / (1024 * 1024):.0f} MB).", "error")
+            return redirect(url_for('home'))
+
         if actual_kb_files_to_save:
             clear_directory(config.DIRECTORIO_BASE_CONOCIMIENTO)
             for file in actual_kb_files_to_save:
@@ -243,8 +263,16 @@ def analyze_route():
         else:
              flash("Se usará el contenido actual de la carpeta BaseConocimiento.", "info")
 
+    # --- Validación de tamaño para el archivo de Proyecto ---
     if not use_existing_project_file_checkbox:
         if project_file_uploaded and project_file_uploaded.filename != '' and allowed_file(project_file_uploaded.filename):
+            project_file_uploaded.seek(0, os.SEEK_END)
+            project_file_size = project_file_uploaded.tell()
+            project_file_uploaded.seek(0)
+            if project_file_size > MAX_PROJECT_FILE_SIZE_MB:
+                flash(f"El archivo de proyecto excede el límite de tamaño ({MAX_PROJECT_FILE_SIZE_MB / (1024 * 1024):.0f} MB).", "error")
+                return redirect(url_for('home'))
+
             clear_directory(config.DIRECTORIO_PROYECTO_ANALIZAR)
             filename = secure_filename(project_file_uploaded.filename)
             project_file_uploaded.save(os.path.join(config.DIRECTORIO_PROYECTO_ANALIZAR, filename))
@@ -277,7 +305,7 @@ def analyze_route():
         app.logger.error(f"Error de validación o tipo en la respuesta del LLM: {e_val}")
         flash(f"Error Crítico: La respuesta del LLM no cumplió con el formato esperado. Detalles: {e_val}", "error")
     except Exception as e:
-        app.logger.error(f"Excepción inesperada en la ruta /analyze: {e}", exc_info=True)
+        app.logger.error(f"Ocurrió un error inesperado en la ruta /analyze: {e}", exc_info=True)
         flash(f"Ocurrió un error interno inesperado en el servidor: {str(e)}", "error")
 
     return redirect(url_for('home'))
