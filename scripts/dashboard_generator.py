@@ -32,7 +32,7 @@ def get_confiabilidad_class(score):
     if score >= 0.45: return "confiabilidad-medium"
     return "confiabilidad-low"
 
-def generar_dashboard_html(ruta_json_resultados, ruta_output_dashboard_html, lista_pdfs_base_conocimiento, info_tesis_config=None):
+def generar_dashboard_html(ruta_json_resultados, ruta_output_dashboard_html, info_tesis_config=None):
     try:
         with open(ruta_json_resultados, 'r', encoding='utf-8') as f:
             datos_analisis = json.load(f)
@@ -49,86 +49,32 @@ def generar_dashboard_html(ruta_json_resultados, ruta_output_dashboard_html, lis
     logo_inline_base64 = image_to_base64("logo-itba.png")                
     logo_itba_footer_base64 = image_to_base64("itba.png")               
     
-    risk_category_emojis = {"Rojo": "🔥", "Ámbar": "⚠️", "Verde": "🟢", "Gris (Indeterminado)": "❓"}
-    estado_map = {
-        "Rojo": {"clase": "rojo", "titulo": "Riesgos Altos"}, "Ámbar": {"clase": "ambar", "titulo": "Riesgos Medios"},
-        "Verde": {"clase": "verde", "titulo": "Riesgos Bajos"}, "Gris (Indeterminado)": {"clase": "gris", "titulo": "Riesgos Indeterminados"}
-    }
-    orden_secciones = ["Rojo", "Ámbar", "Verde", "Gris (Indeterminado)"]
-
-    # 1. Riesgos (Tarjetas Resumen)
-    riesgos_html = ""
-    if riesgos_identificados:
-        secciones_html = []
-        riesgos_con_indices = list(enumerate(riesgos_identificados))
-        for estado_key in orden_secciones:
-            riesgos_en_categoria = [(i, r) for i, r in riesgos_con_indices if r.get("estado_RAG_sugerido") == estado_key]
-            if not riesgos_en_categoria: continue
-
-            cards_html = []
-            for i, riesgo in riesgos_en_categoria:
-                score = riesgo.get("score_confianza_compuesto")
-                confiabilidad_class = get_confiabilidad_class(score)
-                confiabilidad_text = f"Confiabilidad: {score:.0%}" if score is not None else "Confiabilidad: N/A"
-                
-                cards_html.append(f'''
-                <a href="#risk-detail-{i}" class="risk-card {escape(estado_map[estado_key]["clase"])}">
-                    <h6>{escape(riesgo.get("descripcion_riesgo", "N/A"))}</h6>
-                    <div class="risk-summary-details">
-                        <p><span class="details-label">Impacto:</span> <span class="details-value">{escape(riesgo.get("impacto_estimado", "N/A"))}</span></p>
-                        <p><span class="details-label">Probabilidad:</span> <span class="details-value">{escape(riesgo.get("probabilidad_estimada", "N/A"))}</span></p>
-                        <p><span class="details-label">Mitigación:</span> <span class="details-value">{escape(riesgo.get("responsabilidad_mitigacion", "N/A"))}</span></p>
-                        <p><span class="details-label">Responsable:</span> <span class="details-value">{escape(riesgo.get("responsable_accidente", "N/A"))}</span></p>
-                    </div>
-                    <p class="risk-confiabilidad {confiabilidad_class}">{confiabilidad_text}</p>
-                </a>''')
-            
-            secciones_html.append(f'''
-            <div class="risk-section">
-                <h5><span class="section-title-emoji">{risk_category_emojis.get(estado_key, '')}</span>{escape(estado_map[estado_key]["titulo"])}</h5>
-                <div class="dashboard-grid">{"".join(cards_html)}</div>
-            </div>''')
-        riesgos_html = "".join(secciones_html)
-    else:
-        riesgos_html = "<p class='no-content-message'>No se identificaron riesgos en este análisis.</p>"
-
-    # 2. Detalles de Riesgos
+    # --- LÓGICA PARA DETALLES DE RIESGO (MODIFICADA) ---
     risk_details_html = ""
     if riesgos_identificados:
-        details_list = [f'''
-            <div class="risk-detail-item" id="risk-detail-{i}">
-                <h4><span class="section-title-emoji">ℹ️</span>{escape(riesgo.get("descripcion_riesgo", "N/A"))}</h4>
-                <div class="details-grid-full">
-                    <div><span class="detail-label">Nivel de Riesgo (RAG):</span> {escape(riesgo.get("estado_RAG_sugerido", "N/A"))}</div>
-                    <div><span class="detail-label">Impacto Estimado:</span> {escape(riesgo.get("impacto_estimado", "N/A"))}</div>
-                    <div><span class="detail-label">Probabilidad Estimada:</span> {escape(riesgo.get("probabilidad_estimada", "N/A"))}</div>
-                    <div><span class="detail-label">Responsable de Mitigación:</span> {escape(riesgo.get("responsabilidad_mitigacion", "N/A"))}</div>
-                    <div><span class="detail-label">Responsable en Caso de Accidente:</span> {escape(riesgo.get("responsable_accidente", "N/A"))}</div>
-                </div>
-                <p class="explanation-paragraph"><span class="detail-label">Explicación Detallada:</span> {escape(riesgo.get("explicacion_riesgo", "N/A"))}</p>
-            </div>''' 
-            for i, riesgo in enumerate(riesgos_identificados)
-        ]
+        details_list = []
+        for riesgo in riesgos_identificados:
+            details_list.append(f'''
+            <div class="risk-detail-item">
+                <h4><span class="info-icon">ℹ️</span> {escape(riesgo.get("descripcion_riesgo", "N/A"))}</h4>
+                <p><strong>Tipo de Riesgo:</strong> {escape(riesgo.get("tipo_de_riesgo", "N/D"))}</p>
+                <p><strong>Explicación Detallada:</strong> {escape(riesgo.get("explicacion_riesgo", "N/A"))}</p>
+                <p><strong>Impacto Estimado:</strong> {escape(riesgo.get("impacto_estimado", "N/A"))}</p>
+                <p><strong>Probabilidad Estimada:</strong> {escape(riesgo.get("probabilidad_estimada", "N/A"))}</p>
+                <p><strong>Nivel de Riesgo (RAG Sugerido):</strong> {escape(riesgo.get("estado_RAG_sugerido", "N/A"))}</p>
+            </div>''')
         risk_details_html = "".join(details_list)
-        
-    # 3. Evidencia Utilizada
-    evidence_html = ""
+    else:
+        risk_details_html = "<p class='no-content-message'>No se identificaron riesgos para detallar.</p>"
+
+    # --- LÓGICA PARA DOCUMENTOS DE BASE DE CONOCIMIENTO (MODIFICADA) ---
+    knowledge_base_html = ""
     if fragmentos_fuente:
-        fragmentos_ordenados = sorted(
-            fragmentos_fuente, 
-            key=lambda x: -1 if x.get("score_relevancia") is None else x.get("score_relevancia"), 
-            reverse=True)
-        evidence_list = [f'''
-            <div class="source-chunk">
-                <div class="chunk-header">
-                    <span>Fuente: {escape(frag.get("nombre_documento_fuente", "N/A"))}, Pág: {escape(str(frag.get("numero_pagina", "N/A")))}</span>
-                    <span class="relevance-score">Relevancia: {f'{frag.get("score_relevancia"):.0%}' if frag.get("score_relevancia") is not None else "N/A"}</span>
-                </div>
-                <div class="chunk-content"><p>{escape(frag.get("contenido", ""))}</p></div>
-            </div>'''
-            for frag in fragmentos_ordenados
-        ]
-        evidence_html = "".join(evidence_list)
+        documentos_unicos = sorted(list(set(frag.get("nombre_documento_fuente") for frag in fragmentos_fuente if frag.get("nombre_documento_fuente"))))
+        list_items = "".join([f'<li>{escape(doc)}</li>' for doc in documentos_unicos])
+        knowledge_base_html = f'<ul>{list_items}</ul>'
+    else:
+        knowledge_base_html = "<p class='no-content-message'>No se utilizó evidencia de la base de conocimiento.</p>"
 
     final_html = f'''
 <!DOCTYPE html>
@@ -146,34 +92,17 @@ def generar_dashboard_html(ruta_json_resultados, ruta_output_dashboard_html, lis
         .title-with-logo img.logo-inline{{height:37px;width:auto}}
         h1{{color:#1a2533;font-size:1.7em;margin:0}}h2{{color:#2c3e50;font-size:1.3em;margin-top:8px;font-weight:500}}
         h3{{color:#4a5568;font-size:1.1em;margin-bottom:10px;font-weight:400}}
-        h4.app-subtitle{{color:#555;font-size:1em;font-weight:700;font-style:italic;margin-top:2px;margin-bottom:15px}}
-        p.student-name{{color:#333;font-size:1.1em;font-weight:700;margin-top:15px;margin-bottom:20px}}
-        .project-analysis-title,.section-title{{text-align:center;font-size:1.5em;color:#1a2533;margin-top:0;margin-bottom:25px;padding-bottom:15px;border-bottom:2px solid #e0e0e0}}
-        .risk-section > h5, .details-section > h2, .evidence-section > h2{{font-size:1.4em;color:#2c3e50;border-bottom:1px solid #e0e0e0;padding-bottom:10px;margin-bottom:20px;text-align:left}}
-        .section-title-emoji{{margin-right:8px}}
-        .dashboard-grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px}}
-        .risk-card{{background-color:#fdfdfd;border:1px solid #e9ecef;border-radius:8px;padding:15px;box-shadow:0 2px 8px rgba(0,0,0,.06);transition:all .2s ease-in-out;border-top-width:5px;border-top-style:solid;display:flex;flex-direction:column;text-decoration:none;color:inherit}}
-        .risk-card:hover{{transform:translateY(-4px);box-shadow:0 5px 15px rgba(0,0,0,.08)}}
-        .risk-card h6{{margin:0 0 8px;color:#34495e;font-size:1em;flex-grow:1}}
-        .risk-card .risk-summary-details p{{font-size:.8em;line-height:1.4;margin:0 0 4px;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
-        .risk-card .details-label{{font-weight:600;color:#444}}.risk-card .details-value{{font-weight:400}}
-        .risk-confiabilidad{{font-size:.85em;font-weight:600;margin-top:10px;padding-top:8px;border-top:1px solid #f0f0f0}}
-        .confiabilidad-high{{color:#1E8449}} .confiabilidad-medium{{color:#B9770E}}
-        .confiabilidad-low{{color:#707B7C}} .confiabilidad-none{{color:#707B7C}}
-        .risk-card.rojo{{border-top-color:#e74c3c}}.risk-card.ambar{{border-top-color:#f39c12}}
-        .risk-card.verde{{border-top-color:#2ecc71}}.risk-card.gris{{border-top-color:#95a5a6}}
-        .details-section,.evidence-section{{margin-top:30px;padding-top:20px;border-top:1px solid #e0e0e0}}
-        .risk-detail-item{{margin-bottom:20px;padding-bottom:15px;border-bottom:1px dashed #ccc}}
+        .section-title{{text-align:center;font-size:1.5em;color:#1a2533;margin-top:0;margin-bottom:25px;padding-bottom:15px;border-bottom:2px solid #e0e0e0}}
+        .details-section,.kb-section{{margin-top:30px;padding-top:20px;border-top:1px solid #e0e0e0}}
+        .details-section > h2, .kb-section > h2 {{font-size:1.4em;color:#2c3e50;border-bottom:1px solid #e0e0e0;padding-bottom:10px;margin-bottom:20px;text-align:left}}
+        .risk-detail-item{{margin-bottom:15px;padding-bottom:15px;border-bottom:1px dashed #ccc}}
         .risk-detail-item:last-child{{border-bottom:none}}
-        .risk-detail-item h4{{font-size:1.1em;color:#34495e;margin:0 0 12px}}
-        .risk-detail-item .details-grid-full{{display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:12px;font-size:.9em}}
-        .risk-detail-item .details-grid-full div{{background-color:#f8f9fa;padding:8px 12px;border-radius:4px}}
-        .risk-detail-item p.explanation-paragraph{{font-size:.9em;line-height:1.6;margin:0}}
-        .risk-detail-item .detail-label{{font-weight:700;color:#444}}
-        .source-chunk{{border:1px solid #e9ecef;border-radius:8px;margin-bottom:15px}}
-        .chunk-header{{display:flex;justify-content:space-between;align-items:center;padding:10px 15px;background-color:#f8f9fa;border-bottom:1px solid #e9ecef;font-size:.9em}}
-        .relevance-score{{font-weight:500;color:#555}}
-        .chunk-content p{{margin:0;white-space:pre-wrap;padding:15px;font-size:.9em;line-height:1.6}}
+        .risk-detail-item h4{{font-size:1.1em;color:#34495e;margin:0 0 12px;display:flex;align-items:center}}
+        .risk-detail-item p{{font-size:.95em;line-height:1.6;margin:4px 0 8px 0;}}
+        .risk-detail-item p strong{{color:#333;}}
+        .info-icon{{margin-right:8px;color:#3498db;}}
+        .kb-section ul {{list-style-type: square; padding-left: 20px;}}
+        .kb-section li {{margin-bottom: 8px; font-size: 0.95em;}}
         .no-content-message{{text-align:center;font-style:italic;color:#6c757d;padding:40px;background-color:#f8f9fa;border-radius:8px}}
         .dashboard-page-footer{{width:100%;text-align:center;padding:25px 0;font-size:.9em;color:#6c757d;margin-top:30px;border-top:1px solid #d0d0d0}}
         .dashboard-page-footer p{{margin:5px 0}}
@@ -188,17 +117,15 @@ def generar_dashboard_html(ruta_json_resultados, ruta_output_dashboard_html, lis
         <div class="header-content">
             <div class="title-with-logo"><img src="{logo_inline_base64}" alt="Logo" class="logo-inline"><h1>{escape(it.get("titulo_tesis_h1", ""))}</h1></div>
             <h2>{escape(it.get("titulo_tesis_h2", ""))}</h2><h3>{escape(it.get("titulo_tesis_h3", ""))}</h3>
-            <h4 class="app-subtitle">{escape(it.get("app_subtitle", ""))}</h4><p class="student-name">Alumno: {escape(it.get("alumno", ""))}</p>
         </div>
-        <h2 class="project-analysis-title">Resultados del Análisis para: {nombre_proyecto_analizado}</h2>
-        {riesgos_html}
+        <h2 class="section-title">Resultados del Análisis para: {nombre_proyecto_analizado}</h2>
         <div class="details-section">
             <h2 class="section-title">Detalles de Riesgos Identificados</h2>
-            {risk_details_html if riesgos_identificados else "<p class='no-content-message'>No se identificaron riesgos para detallar.</p>"}
+            {risk_details_html}
         </div>
-        <div class="evidence-section">
-            <h2 class="section-title">Evidencia Utilizada</h2>
-            {evidence_html if fragmentos_fuente else "<p class='no-content-message'>No se recuperó evidencia de la base de conocimiento.</p>"}
+        <div class="kb-section">
+            <h2 class="section-title">Documentos de la Base de Conocimiento Utilizada</h2>
+            {knowledge_base_html}
         </div>
     </div>
     <div class="dashboard-page-footer">

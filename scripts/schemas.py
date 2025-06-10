@@ -4,6 +4,8 @@ from typing import List, Literal, Optional
 
 ImpactoEstimado = Literal["Bajo", "Medio", "Alto"]
 ProbabilidadEstimada = Literal["Baja", "Media", "Alta"]
+# --- NUEVO: Tipo de Riesgo ---
+TipoDeRiesgo = Literal["Explícito", "Implícito"]
 
 class SourceChunk(BaseModel):
     """Representa un fragmento de la base de conocimiento que fue recuperado como evidencia."""
@@ -15,12 +17,13 @@ class SourceChunk(BaseModel):
 class RiskItem(BaseModel):
     """Representa un único riesgo identificado con todos sus atributos."""
     descripcion_riesgo: str = Field(description="Descripción clara y concisa del riesgo identificado.")
+    # --- CAMBIO: Añadido tipo_de_riesgo ---
+    tipo_de_riesgo: TipoDeRiesgo = Field(description="Clasificación del riesgo como 'Explícito' (directamente mencionado) o 'Implícito' (deducido lógicamente).")
     impacto_estimado: ImpactoEstimado = Field(description="Impacto potencial del riesgo. Debe ser 'Bajo', 'Medio' o 'Alto'.")
-    probabilidad_estimada: ProbabilidadEstimada = Field(description="Probabilidad de ocurrencia del riesgo. Debe ser 'Baja', 'Media' o 'Alta'.")
+    probabilidad_estimada: ProbabilidadEstimada = Field(description="Probabilidad de ocurrencia del riesgo. Debe ser 'Baja', 'Media', o 'Alta'.")
     responsabilidad_mitigacion: str = Field(description="Rol o departamento responsable de las tareas de mitigación preventivas.")
     responsable_accidente: str = Field(description="Rol o departamento que asumiría la responsabilidad principal si el riesgo se materializa.")
     explicacion_riesgo: str = Field(description="Breve explicación de por qué esto es un riesgo, citando evidencia del contexto.")
-    # --- CAMBIO: Reemplazamos el score simple por uno compuesto y más significativo ---
     score_confianza_compuesto: Optional[float] = Field(default=None, description="Confianza calculada para el riesgo, combinando la relevancia de la evidencia con la severidad del riesgo (0 a 1).")
 
 class LLMResponse(BaseModel):

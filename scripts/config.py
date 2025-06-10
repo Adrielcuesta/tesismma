@@ -26,7 +26,7 @@ DATA_DIR = os.path.join(PROJECT_ROOT, "datos")
 DIRECTORIO_BASE_CONOCIMIENTO = os.path.join(DATA_DIR, "BaseConocimiento")
 DIRECTORIO_PROYECTO_ANALIZAR = os.path.join(DATA_DIR, "ProyectoAnalizar")
 CHROMA_DB_PATH = os.path.join(DATA_DIR, "ChromaDB_V1")
-DIRECTORIO_RESULTADOS_BASE = os.path.join(DATA_DIR, "Resultados") # Renombrado
+DIRECTORIO_RESULTADOS_BASE = os.path.join(DATA_DIR, "Resultados")
 MODELOS_LOCALES_PATH = os.path.join(PROJECT_ROOT, "modelos_locales")
 CACHE_DIR_HF = os.path.join(PROJECT_ROOT, ".cache", "huggingface_cache")
 
@@ -42,9 +42,9 @@ else:
 
 # --- Configuración de RAG y Embeddings ---
 CHUNK_SIZE = 1000
-CHUNK_OVERLAP = 150
+CHUNK_OVERLAP = 100
 MAX_CHARS_PROYECTO = 12000
-RECREAR_DB = False # Ajustado para que la UI controle la recreación de la DB
+RECREAR_DB = False
 MAX_PAGES_TO_CHECK_FOR_INDEX = 5
 
 # --- Configuración para el Re-ranker ---
@@ -81,13 +81,12 @@ LLM_MODELS = {
         "api_key_env": "QWEN_API_KEY",
         "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1"
     },
-    # Nuevos modelos
-    "mistral-large-latest": { # 
-        "provider": "mistralai",
-        "display_name": "Mistral Large (Recomendado)",
+    "mistral-large-latest": {
+        "provider": "mistral", # Corregido para mayor claridad
+        "display_name": "Mistral Large",
         "api_key_env": "MISTRAL_API_KEY"
     },
-    "command-r-plus": { # 
+    "command-r-plus": {
         "provider": "cohere",
         "display_name": "Cohere Command R+",
         "api_key_env": "COHERE_API_KEY"
@@ -107,25 +106,6 @@ INFO_TESIS = {
 }
 
 # --- Funciones de Inicialización ---
-_api_configured_flag_google = False
-
-def configure_google_api():
-    global _api_configured_flag_google
-    if _api_configured_flag_google: return True
-    gemini_api_key = os.environ.get('GEMINI_API_KEY')
-    if not gemini_api_key:
-        logger.warning("GEMINI_API_KEY no encontrada en .env. El modelo de Gemini no funcionará.")
-        return False
-    try:
-        import google.generativeai as genai
-        genai.configure(api_key=gemini_api_key)
-        logger.info("API Key de Gemini configurada exitosamente.")
-        _api_configured_flag_google = True
-        return True
-    except Exception as e:
-        logger.error(f"Error al configurar la API Key de Gemini: {e}")
-        return False
-
 def inicializar_directorios_datos():
     directorios_a_crear = [
         DIRECTORIO_BASE_CONOCIMIENTO, DIRECTORIO_PROYECTO_ANALIZAR,
