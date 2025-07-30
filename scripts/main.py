@@ -2,6 +2,7 @@
 import os
 import sys
 import logging
+import json # <--- AÑADIDO
 from pydantic import ValidationError
 from typing import Optional
 
@@ -60,9 +61,28 @@ def run_analysis(
         
         logger.info("Invocando la cadena RAG principal...")
         respuesta_rag_dict = qa_chain.invoke({"query": descripcion_nuevo_proyecto})
-        llm_response_obj = respuesta_rag_dict.get("result")
-        if not isinstance(llm_response_obj, LLMResponse): raise TypeError("Respuesta del LLM no es del tipo esperado.")
         
+        # --- INICIO DE LA CORRECCIÓN: Parseo manual de la respuesta del LLM ---
+        raw_json_string = respuesta_rag_dict.get("result", "{}")
+        
+        # Limpiar el string en caso de que el LLM devuelva markdown
+        if "```json" in raw_json_string:
+            clean_json_string = raw_json_string.split("```json")[1].split("```")[0].strip()
+        elif "```" in raw_json_string:
+            clean_json_string = raw_json_string.split("```")[1].split("```")[0].strip()
+        else:
+            clean_json_string = raw_json_string
+
+        try:
+            # Parsear el string a un diccionario y luego validar con Pydantic
+            llm_response_data = json.loads(clean_json_string)
+            llm_response_obj = LLMResponse.model_validate(llm_response_data)
+        except (json.JSONDecodeError, ValidationError) as e:
+            logger.error(f"Error CRÍTICO al parsear o validar la respuesta JSON del LLM: {e}")
+            logger.error(f"Respuesta recibida del LLM (string crudo):\n---INICIO---\n{raw_json_string}\n---FIN---")
+            raise  # Re-lanzamos la excepción para que el error sea visible en la app
+        # --- FIN DE LA CORRECCIÓN ---
+            
         fuentes_docs = respuesta_rag_dict.get("source_documents", [])
         logger.info(f"Metadatos de la evidencia recuperada: {[doc.metadata for doc in fuentes_docs]}")
         
@@ -78,21 +98,18 @@ def run_analysis(
         
         logger.info("Ensamblando el reporte final...")
         
-        # --- INICIO DE LA CORRECCIÓN ---
         fragmentos_fuente_mapeados = [
             SourceChunk(
                 contenido=doc.page_content,
-                # Mapeo explícito de los campos
                 nombre_documento_fuente=doc.metadata.get('source_document', 'Desconocido'),
                 numero_pagina=doc.metadata.get('page_number', -1),
                 score_relevancia=doc.metadata.get('relevance_score')
             ) for doc in fuentes_docs
         ]
-        # --- FIN DE LA CORRECCIÓN ---
 
         reporte_final = RiskReport(
             riesgos_identificados=llm_response_obj.riesgos_identificados,
-            fragmentos_fuente=fragmentos_fuente_mapeados, # Usamos la lista corregida
+            fragmentos_fuente=fragmentos_fuente_mapeados,
             respuesta_cruda_llm=llm_response_obj.model_dump_json(indent=2),
             configuracion_analisis={
                 "modelo_llm_usado": selected_llm_model_id, "display_name_modelo": config.LLM_MODELS.get(selected_llm_model_id, {}).get("display_name", "N/A"),
@@ -110,7 +127,6 @@ def run_analysis(
         ruta_output_dashboard_html = os.path.join(output_dir_especifico, dashboard_html_filename)
         dashboard_generator.generar_dashboard_html(
             ruta_json_resultados=ruta_json_guardado, ruta_output_dashboard_html=ruta_output_dashboard_html,
-            lista_pdfs_base_conocimiento=document_utils.listar_documentos_kb(config.DIRECTORIO_BASE_CONOCIMIENTO),
             info_tesis_config=config.INFO_TESIS
         )
         if os.path.exists(ruta_output_dashboard_html):
